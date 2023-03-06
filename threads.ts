@@ -4,10 +4,10 @@ import * as GitHub from '@octokit/rest'
 import * as DateTime from 'date-and-time'
 import * as Threads from 'worker_threads'
 
-const Octokit = new GitHub.Octokit({ auth: Actions.getInput('github_token', { required: true })})
-
 Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   Actions.info(`Thread handling ${Message?.Branch} started.`)
+
+  const Octokit = new GitHub.Octokit({ auth: Actions.getInput('github_token', { required: true })})
 
   var ChangedFiles:Array<string> = []
   const ActionHistory = await Octokit.rest.actions.listWorkflowRunsForRepo({
