@@ -7,11 +7,16 @@ import * as Threads from 'worker_threads'
 Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   Actions.info(`Thread handling ${Message?.Branch} started.`)
 
+  // Variables 
   const Octokit = new GitHub.Octokit({ auth: Actions.getInput('github_token', { required: true })})
-
   var ChangedFiles:Array<string> = []
-  const ActionHistory = await Octokit.rest.actions.listWorkflowRunsForRepo({
+  var CommitDuration = new Date()
+  
+  // Check GitHub workflow history to calcuate duration of commits.
+  const WorkflowHistory = await Octokit.rest.actions.listWorkflowRunsForRepo({
     owner: Actions.getInput('repo_owner', { required: true }), repo: Actions.getInput('repo_name', { required: true }), branch: Message?.Branch })
+
+  // Get a list of changed files during the duration.
   await Octokit.rest.repos.listCommits({
     owner: Actions.getInput('repo_owner', { required: true }), repo: Actions.getInput('repo_name', { required: true }),  })
     .then(function(Data) {
