@@ -9,7 +9,7 @@ const Octokit = new GitHub.Octokit({ auth: Actions.getInput('github_token', { re
 Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   Actions.info(`Thread handling ${Message?.Branch} started.`)
 
-  var ChangedFile:Array<string> = []
+  var ChangedFiles:Array<string> = []
   const ActionHistory = await Octokit.rest.actions.listWorkflowRunsForRepo({
     owner: Actions.getInput('repo_owner', { required: true }), repo: Actions.getInput('repo_name', { required: true }), branch: Message?.Branch })
   await Octokit.rest.repos.listCommits({
@@ -17,12 +17,13 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
     .then(function(Data) {
       Data.data.forEach(function(Commit) {
         Commit.files.forEach(function(Files) {
-          
+          if (!ChangedFiles.some(function(Changed) { return Changed === Files.previous_filename })) ChangedFiles.push(Files.previous_filename)
+          if (!ChangedFiles.some(function(Changed) { return Changed === Files.filename })) ChangedFiles.push(Files.filename)
         })
       })
     })
   Actions.info(`Thread for ${Message?.Branch}: Found files changes during from to :
-  ${ChangedFile.map(function(element) { return `  - ${element}` })}
+  ${ChangedFiles.map(function(element) { return `  - ${element}` })}
   `)
   
 })
