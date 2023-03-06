@@ -4,8 +4,9 @@ import * as Threads from 'worker_threads'
 const Branches = Actions.getMultilineInput('branches', { required: true })
 var BrancheThreads:Threads.Worker[] = [] 
 
-Actions.info('The following branches will be processed:')
-Branches.forEach(function(element) { Actions.info(`  - ${element}`) })
+Actions.info(`The following branches will be processed:
+${Branches.map(function(element) { return `  - ${element}` })}
+`)
 
 Branches.forEach(function(Branche, Index) {
   BrancheThreads.push(new Threads.Worker('./threads.js'))
