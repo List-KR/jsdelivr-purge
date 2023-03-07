@@ -31,6 +31,7 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   ${ChangedFiles.map(function(element) { return `  - ${element}` })}
   `)
   
+  // Make requests
   ChangedFiles.forEach(function(Changed) {
     Actions.info(`Thread for ${Message?.Branch}: Sent the purge request to jsDelivr server:
     ${Exec.exec(`curl -X POST https://purge.jsdelivr.net/ 
