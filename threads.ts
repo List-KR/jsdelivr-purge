@@ -37,7 +37,7 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
     ${Exec.exec(`curl -X POST https://purge.jsdelivr.net/ 
     -H 'cache-control: no-cache' 
     -H 'content-type: application/json' 
-    -d '{"path":["${Changed}"]}'`)}
+    -d '{"path":["/gh/${Actions.getInput('repo_owner', { required: true })}/${Actions.getInput('repo_name', { required: true })}@${Message?.Branch}/${Changed}"]}'`)}
     `)
   })
 })
