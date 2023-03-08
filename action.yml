@@ -1,0 +1,30 @@
+name: 'Purge cache existing in jsDelivr Network'
+author: 'PiQuark6046 and contributors'
+description: 'Clone your GitHub repo into jsDelivr Network to enhance transmission speed'
+
+inputs:
+  github_token:
+    description: 'GitHub Token of a public repo'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up NodeJS LTS
+      uses: actions/setup-node@v3
+      with:
+        node-version: 'lts/*'
+    - name: Install npm packages
+      run: |
+        sudo npm i -g typescript
+        npm i
+      shell: bash
+      working-directory: ${{ github.action_path }}
+    - name: Compile Typescript
+      run: tsc
+      shell: bash
+      working-directory: ${{ github.action_path }}
+    - name: Run compiled scripts
+      run: node main.js
+      shell: bash
+      working-directory: ${{ github.action_path }}
