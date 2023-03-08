@@ -32,12 +32,19 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   `)
   
   // Make requests
-  ChangedFiles.forEach(function(Changed) {
-    Actions.info(`Thread for ${Message?.Branch}: Sent the purge request to jsDelivr server:
-    ${Exec.exec(`curl -X POST https://purge.jsdelivr.net/ 
-    -H 'cache-control: no-cache' 
-    -H 'content-type: application/json' 
-    -d '{"path":["/gh/${Actions.getInput('repo_owner', { required: true })}/${Actions.getInput('repo_name', { required: true })}@${Message?.Branch}/${Changed}"]}'`)}
-    `)
+  ChangedFiles.forEach(async function(Changed) {
+    var CDNResponses:Array<string> = []
+    while(CDNResponses.every(async function(CDNResponse) {
+      var CDNStatus = JSON.parse(await Exec.getExecOutput(`curl -X GET https://purge.jsdelivr.net/status/${CDNResponse}`).then(function(Result) { return Result.stdout }))['status']
+      return !(CDNStatus === 'finished' || CDNStatus === 'failed')
+    })) {
+      var CDNRequest = await Exec.getExecOutput(`curl -X POST https://purge.jsdelivr.net/ 
+      -H 'cache-control: no-cache' 
+      -H 'content-type: application/json' 
+      -d '{"path":["/gh/${Actions.getInput('repo_owner', { required: true })}/${Actions.getInput('repo_name', { required: true })}@${Message?.Branch}/${Changed}"]}'`)
+      .then(function(Result) { return Result.stdout })
+      
+      
+    }
   })
 })
