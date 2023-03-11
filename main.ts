@@ -13,6 +13,6 @@ Branches.forEach((Branche, Index) => {
   BrancheThreads[Index].postMessage({'Branche': Branche})
   BrancheThreads[Index].on('exit', () => {
     BrancheThreads = BrancheThreads.filter((element) => element === BrancheThreads[Index])
-    if (!BrancheThreads.length) { Actions.ExitCode }
+    if (!BrancheThreads.length) { return Actions.ExitCode }
   })
 })
