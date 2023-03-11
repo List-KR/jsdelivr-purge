@@ -5,14 +5,14 @@ const Branches = Actions.getMultilineInput('branches', { required: true })
 var BrancheThreads:Threads.Worker[] = [] 
 
 Actions.info(`The following branches will be processed:
-${Branches.map(function(element) { return `  - ${element}` })}
+${Branches.join(" - ")}
 `)
 
-Branches.forEach(function(Branche, Index) {
+Branches.forEach((Branche, Index) => {
   BrancheThreads.push(new Threads.Worker('./threads.js'))
   BrancheThreads[Index].postMessage({'Branche': Branche})
-  BrancheThreads[Index].on('exit', function() {
-    BrancheThreads = BrancheThreads.filter(function(element) { element === BrancheThreads[Index] })
-    if (BrancheThreads.length === 0) { Actions.ExitCode }
+  BrancheThreads[Index].on('exit', () => {
+    BrancheThreads = BrancheThreads.filter((element) => element === BrancheThreads[Index])
+    if (!BrancheThreads.length) { Actions.ExitCode }
   })
 })
