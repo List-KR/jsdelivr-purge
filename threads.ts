@@ -36,7 +36,7 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   }
   
   Actions.info(`Thread for ${Message?.Branch}: Found files changes during from to :
-  ${ChangedFiles.map(function(element) { return `  - ${element}` })}
+  ${ChangedFiles.join('\n  - ').replace(/^/, ' - ')}
   `)
   
   // Make requests
