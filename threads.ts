@@ -22,8 +22,10 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
     .then(function(Data) {
       Data.data.forEach(function(Commit) {
         Commit.files.forEach(function(Files) {
-          if (!ChangedFiles.some(function(Changed) { return Changed === Files.previous_filename })) ChangedFiles.push(Files.previous_filename)
-          if (!ChangedFiles.some(function(Changed) { return Changed === Files.filename })) ChangedFiles.push(Files.filename)
+          ChangedFiles.forEach(function(Changed) {
+            if (Changed !== Files.previous_filename) ChangedFiles.push(Files.previous_filename)
+            if (Changed !== Files.filename) ChangedFiles.push(Files.filename)
+          })
         })
       })
     })
