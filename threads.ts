@@ -55,4 +55,5 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
       
     }
   })
+  Threads.parentPort.close()
 })
