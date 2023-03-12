@@ -51,9 +51,11 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
       -H 'content-type: application/json' 
       -d '{"path":["/gh/${Actions.getInput('repo_owner', { required: true })}/${Actions.getInput('repo_name', { required: true })}@${Message?.Branch}/${Changed}"]}'`)
       .then(function(Result) { return Result.stdout })
-      
-      
+      Actions.info(`Thread for ${Message?.Branch}: Sent new request having ${JSON.parse(CDNRequest)['id']} ID.`)
+      CDNResponses.push(JSON.parse(CDNRequest)['id'])
     }
+    Actions.info(`Thread for ${Message?.Branch}: Purged ${Changed}.`)
   })
+  Actions.info(`Thread for ${Message?.Branch}: All changed files are purged. Exiting...`)
   Threads.parentPort.close()
 })
