@@ -5,7 +5,7 @@ const Branches = Actions.getMultilineInput('branches', { required: true })
 var BrancheThreads:Threads.Worker[] = [] 
 
 Actions.info(`The following branches will be processed:
-${Branches.join(" - ")}
+${Branches.join('\n  - ').replace(/^/, ' - ')}
 `)
 
 Branches.forEach((Branche, Index) => {
