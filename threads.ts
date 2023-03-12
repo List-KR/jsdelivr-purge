@@ -29,6 +29,12 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
         })
       })
     })
+  
+  if (!ChangedFiles.length) {
+    Actions.info(`Thread for ${Message?.Branch}: No files changes found. Exiting...`)
+    Threads.parentPort.close()
+  }
+  
   Actions.info(`Thread for ${Message?.Branch}: Found files changes during from to :
   ${ChangedFiles.map(function(element) { return `  - ${element}` })}
   `)
