@@ -13,8 +13,13 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   var CommitDuration = new Date()
   
   // Check GitHub workflow history to calcuate duration of commits.
-  const WorkflowHistory = await Octokit.rest.actions.listWorkflowRunsForRepo({
+  await Octokit.rest.actions.listWorkflowRunsForRepo({
     owner: Actions.getInput('repo_owner', { required: true }), repo: Actions.getInput('repo_name', { required: true }), branch: Message?.Branch })
+    .then(function(Data) {
+      for (var WorkflowRun of Data.data.workflow_runs) {
+        
+      }
+    })
 
   // Get a list of changed files during the duration.
   await Octokit.rest.repos.listCommits({
