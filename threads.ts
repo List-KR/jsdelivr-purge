@@ -16,9 +16,11 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   await Octokit.rest.actions.listWorkflowRunsForRepo({
     owner: Actions.getInput('repo_owner', { required: true }), repo: Actions.getInput('repo_name', { required: true }), branch: Message?.Branch })
     .then(function(Data) {
-      for (var WorkflowRun of Data.data.workflow_runs) {
-        
-      }
+      // TODO: replace with better expression
+      var WorkflowIDs:Array<number> = []
+      Data.data.workflow_runs.forEach(function(WorkflowRun) {
+        WorkflowIDs.push(WorkflowRun.workflow_id)
+      })
     })
 
   // Get a list of changed files during the duration.
