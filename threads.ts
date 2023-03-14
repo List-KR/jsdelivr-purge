@@ -17,10 +17,15 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
     owner: Actions.getInput('repo_owner', { required: true }), repo: Actions.getInput('repo_name', { required: true }), branch: Message?.Branch })
     .then(function(Data) {
       // TODO: replace with better expression
-      var WorkflowIDs:Array<number> = []
+      var WorkflowRunIDs:Array<number> = []
       Data.data.workflow_runs.forEach(function(WorkflowRun) {
-        WorkflowIDs.push(WorkflowRun.workflow_id)
+        WorkflowRunIDs.push(WorkflowRun.workflow_id)
       })
+      for (var WorkFlowRunID of WorkflowRunIDs) {
+        Octokit.rest.actions.getWorkflowRun({ owner: Actions.getInput('repo_owner', { required: true }), repo: Actions.getInput('repo_name', { required: true }), run_id: WorkFlowRunID }).then(function(Data) {
+          if (Data.data.created_at)
+        })
+      }
     })
 
   // Get a list of changed files during the duration.
