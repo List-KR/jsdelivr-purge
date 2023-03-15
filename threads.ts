@@ -8,13 +8,15 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   Actions.info(`Thread handling ${Message?.Branch} started.`)
 
   // Variables 
-  const Octokit = new GitHub.Octokit({ auth: Actions.getInput('github_token', { required: true })})
+  const Octokit = new GitHub.Octokit({ auth: process.env['GITHUB_TOKEN'] })
+  const RepoName = process.env['GITHUB_REPO'].split('/')[1]
+  const RepoOwner = process.env['GITHUB_REPO'].split('/')[0]
   var ChangedFiles:Array<string> = []
   var CommitDuration = new Date()
   
   // Check GitHub workflow history to calcuate duration of commits.
   await Octokit.rest.actions.listWorkflowRunsForRepo({
-    owner: Actions.getInput('repo_owner', { required: true }), repo: Actions.getInput('repo_name', { required: true }), branch: Message?.Branch })
+    owner: RepoOwner, repo: RepoName, branch: Message?.Branch })
     .then(function(Data) {
       // TODO: replace with better expression
       var WorkflowRunIDs:Array<number> = []
@@ -22,15 +24,15 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
         WorkflowRunIDs.push(WorkflowRun.workflow_id)
       })
       for (var WorkFlowRunID of WorkflowRunIDs) {
-        Octokit.rest.actions.getWorkflowRun({ owner: Actions.getInput('repo_owner', { required: true }), repo: Actions.getInput('repo_name', { required: true }), run_id: WorkFlowRunID }).then(function(Data) {
-          if (Data.data.created_at)
+        Octokit.rest.actions.getWorkflowRun({ owner: RepoOwner, repo: RepoName, run_id: WorkFlowRunID }).then(function(Data) {
+          Octokit.
         })
       }
     })
 
   // Get a list of changed files during the duration.
   await Octokit.rest.repos.listCommits({
-    owner: Actions.getInput('repo_owner', { required: true }), repo: Actions.getInput('repo_name', { required: true }),  })
+    owner: RepoOwner, repo: RepoName})
     .then(function(Data) {
       Data.data.forEach(function(Commit) {
         Commit.files.forEach(function(Files) {
@@ -61,7 +63,7 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
       var CDNRequest = await Exec.getExecOutput(`curl -X POST https://purge.jsdelivr.net/ 
       -H 'cache-control: no-cache' 
       -H 'content-type: application/json' 
-      -d '{"path":["/gh/${Actions.getInput('repo_owner', { required: true })}/${Actions.getInput('repo_name', { required: true })}@${Message?.Branch}/${Changed}"]}'`)
+      -d '{"path":["/gh/${RepoOwner}/${RepoName}@${Message?.Branch}/${Changed}"]}'`)
       .then(function(Result) { return Result.stdout })
       Actions.info(`Thread for ${Message?.Branch}: Sent new request having ${JSON.parse(CDNRequest)['id']} ID.`)
       CDNResponses.push(JSON.parse(CDNRequest)['id'])

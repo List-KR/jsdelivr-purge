@@ -3,9 +3,12 @@ author: 'PiQuark6046 and contributors'
 description: 'Clone your GitHub repo into jsDelivr Network to enhance transmission speed'
 
 inputs:
-  github_token:
-    description: 'GitHub Token of a public repo'
-    required: true
+  branches:
+    description: ''
+    required: false
+  delay:
+    description: ''
+    required: false
 
 runs:
   using: 'composite'
@@ -27,4 +30,7 @@ runs:
     - name: Run compiled scripts
       run: node main.js
       shell: bash
+      env:
+        GITHUB_REPO: ${{ github.repositoriy }}
+        GITHUB_TOKEN: ${{ github.token }}
       working-directory: ${{ github.action_path }}
