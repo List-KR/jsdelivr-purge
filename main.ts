@@ -2,7 +2,7 @@ import * as Actions from '@actions/core'
 import * as Threads from 'worker_threads'
 
 const Branches = Actions.getMultilineInput('branches', { required: true })
-var BrancheThreads:Threads.Worker[] = [] 
+var BrancheThreads:Threads.Worker[] = []
 
 Actions.info(`The following branches will be processed:
 ${Branches.join('\n  - ').replace(/^/, ' - ')}
