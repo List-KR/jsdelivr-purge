@@ -6,7 +6,7 @@ const Octokit = new GitHub.Octokit({ auth: process.env['GITHUB_TOKEN'] })
 const RepoName = process.env['GITHUB_REPO'].split('/')[1]
 const RepoOwner = process.env['GITHUB_REPO'].split('/')[0]
 const KnownBranches = await Octokit.rest.repos.listBranches({ owner: RepoOwner, repo: RepoName, page: Number.MAX_SAFE_INTEGER, per_page: 100 })
-  .then((Result) => { return Result.data.map((Data) => { return Data.name }) })
+  .then(Result => Result.data.map(Data => Data.name ))
 var Branches = Actions.getMultilineInput('branches', { required: true })
 var BrancheThreads:Threads.Worker[] = []
 
@@ -15,8 +15,8 @@ if (Branches.length === 1 && Branches[0] === '**') {
   Branches = KnownBranches
 } else {
   Branches.forEach((element) => {
-    if (KnownBranches.some((KnownBranche) => { return KnownBranche !== element })) {
-      Branches = Branches.filter((Branch) => { return Branch !== element })
+    if (KnownBranches.some(KnownBranche => KnownBranche !== element )) {
+      Branches = Branches.filter(Branch => Branch !== element )
       Actions.warning(`The ${element} branch does not exist.`)
     }
   })
