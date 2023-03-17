@@ -17,11 +17,11 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   // Check GitHub workflow history to calcuate duration of commits.
   await Octokit.rest.actions.listWorkflowRunsForRepo({
     owner: RepoOwner, repo: RepoName, branch: Message?.Branch })
-    .then(function(Data) {
+    .then((Data) => {
       var WorkflowRunIDs:Array<number> = []
-      WorkflowRunIDs = Data.data.workflow_runs.map(function(element) { return element.workflow_id })
+      WorkflowRunIDs = Data.data.workflow_runs.map(element => element.workflow_id )
       for (var WorkFlowRunID of WorkflowRunIDs) {
-        Octokit.rest.actions.getWorkflowRun({ owner: RepoOwner, repo: RepoName, run_id: WorkFlowRunID }).then(function(Data) {
+        Octokit.rest.actions.getWorkflowRun({ owner: RepoOwner, repo: RepoName, run_id: WorkFlowRunID }).then((Data) => {
           Octokit.
         })
       }
@@ -30,10 +30,10 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   // Get a list of changed files during the duration.
   await Octokit.rest.repos.listCommits({
     owner: RepoOwner, repo: RepoName})
-    .then(function(Data) {
-      Data.data.forEach(function(Commit) {
-        Commit.files.forEach(function(Files) {
-          ChangedFiles.forEach(function(Changed) {
+    .then((Data) => {
+      Data.data.forEach((Commit) => {
+        Commit.files.forEach((Files) => {
+          ChangedFiles.forEach((Changed) => {
             if (Changed !== Files.previous_filename) ChangedFiles.push(Files.previous_filename)
             if (Changed !== Files.filename) ChangedFiles.push(Files.filename)
           })
@@ -51,17 +51,17 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   `)
   
   // Make requests
-  ChangedFiles.forEach(async function(Changed) {
+  ChangedFiles.forEach(async (Changed) => {
     var CDNResponses:Array<string> = []
-    while(CDNResponses.every(async function(CDNResponse) {
-      var CDNStatus = JSON.parse(await Exec.getExecOutput(`curl -X GET https://purge.jsdelivr.net/status/${CDNResponse}`).then(function(Result) { return Result.stdout }))['status']
+    while(CDNResponses.every(async (CDNResponse) => {
+      var CDNStatus = JSON.parse(await Exec.getExecOutput(`curl -X GET https://purge.jsdelivr.net/status/${CDNResponse}`).then(Result => Result.stdout ))['status']
       return !(CDNStatus === 'finished' || CDNStatus === 'failed')
     })) {
       var CDNRequest = await Exec.getExecOutput(`curl -X POST https://purge.jsdelivr.net/ 
       -H 'cache-control: no-cache' 
       -H 'content-type: application/json' 
       -d '{"path":["/gh/${RepoOwner}/${RepoName}@${Message?.Branch}/${Changed}"]}'`)
-      .then(function(Result) { return Result.stdout })
+      .then(Result => Result.stdout )
       Actions.info(`Thread for ${Message?.Branch}: Sent new request having ${JSON.parse(CDNRequest)['id']} ID.`)
       CDNResponses.push(JSON.parse(CDNRequest)['id'])
     }
