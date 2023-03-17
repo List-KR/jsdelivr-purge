@@ -36,4 +36,5 @@ runs:
       env:
         GITHUB_REPO: ${{ github.repositoriy }}
         GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_WORKFLOW_NAME: ${{ github.workflow }}
       working-directory: ${{ github.action_path }}
