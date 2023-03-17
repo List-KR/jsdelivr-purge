@@ -18,11 +18,8 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   await Octokit.rest.actions.listWorkflowRunsForRepo({
     owner: RepoOwner, repo: RepoName, branch: Message?.Branch })
     .then(function(Data) {
-      // TODO: replace with better expression
       var WorkflowRunIDs:Array<number> = []
-      Data.data.workflow_runs.forEach(function(WorkflowRun) {
-        WorkflowRunIDs.push(WorkflowRun.workflow_id)
-      })
+      WorkflowRunIDs = Data.data.workflow_runs.map(function(element) { return element.workflow_id })
       for (var WorkFlowRunID of WorkflowRunIDs) {
         Octokit.rest.actions.getWorkflowRun({ owner: RepoOwner, repo: RepoName, run_id: WorkFlowRunID }).then(function(Data) {
           Octokit.
