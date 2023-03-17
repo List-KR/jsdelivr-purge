@@ -16,7 +16,7 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   
   // Check GitHub workflow history to calcuate duration of commits.
   await Octokit.rest.actions.listWorkflowRunsForRepo({
-    owner: RepoOwner, repo: RepoName, branch: Message?.Branch })
+    owner: RepoOwner, repo: RepoName, branch: Message?.Branch, page: Number.MAX_SAFE_INTEGER, per_page: 100 })
     .then((Data) => {
       var WorkflowRunIDs:Array<number> = []
       WorkflowRunIDs = Data.data.workflow_runs.map(element => element.workflow_id )
