@@ -31,9 +31,16 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
       })
     })
 
+  // Calcuate time including the delay.
+  var CommitTime = new Date(LatestWorkflowRunTime)
+  CommitTime = DateTime.addHours(CommitTime, - DateTime.preparse(Actions.getInput('delay'), 'H:m:s')['H'])
+  CommitTime = DateTime.addMinutes(CommitTime, - DateTime.preparse(Actions.getInput('delay'), 'H:m:s')['m'])
+  CommitTime = DateTime.addSeconds(CommitTime, - DateTime.preparse(Actions.getInput('delay'), 'H:m:s')['s'])
+
   // Get a list of changed files during the duration.
   await Octokit.rest.repos.listCommits({
-    owner: RepoOwner, repo: RepoName})
+    owner: RepoOwner, repo: RepoName, page: Number.MAX_SAFE_INTEGER, per_page: 100,
+    since: DateTime.format(CommitTime, 'YYYY-MM-DD[T]HH:MM:SSZ')})
     .then((Data) => {
       Data.data.forEach((Commit) => {
         Commit.files.forEach((Files) => {
