@@ -12,7 +12,7 @@ on:
     - cron: '* 0/1 * * *'
   workflow_dispatch:
 
-permission:
+permissions:
     actions: read
     contents: read
 
