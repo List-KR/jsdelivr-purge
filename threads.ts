@@ -30,6 +30,10 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
     })
 
   // Calcuate time including the delay.
+  if (LatestWorkflowRunTime === Number.MAX_SAFE_INTEGER) {
+    LatestWorkflowRunTime = 1199145600000 // Jan 1, 2008 - The year that GitHub was founded.
+    Actions.info(`This workflow run is first jsdelivr-purge run of ${process.env['GITHUB_REPO']}.`)
+  }
   var CommitTime = new Date(LatestWorkflowRunTime)
   CommitTime = DateTime.addHours(CommitTime, - DateTime.preparse(Actions.getInput('delay'), 'H:m:s')['H'])
   CommitTime = DateTime.addMinutes(CommitTime, - DateTime.preparse(Actions.getInput('delay'), 'H:m:s')['m'])
