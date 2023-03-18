@@ -4,6 +4,8 @@ import * as GitHub from '@octokit/rest'
 import * as DateTime from 'date-and-time'
 import * as Threads from 'worker_threads'
 
+const CurrentTime = Date.now()
+
 Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   Actions.info(`Thread handling ${Message?.Branch} started.`)
 
@@ -12,19 +14,21 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   const RepoName = process.env['GITHUB_REPO'].split('/')[1]
   const RepoOwner = process.env['GITHUB_REPO'].split('/')[0]
   var ChangedFiles:Array<string> = []
-  var CommitDuration = new Date()
+  var LatestWorkflowRunTime:number = Number.MAX_SAFE_INTEGER
   
   // Check GitHub workflow history to calcuate duration of commits.
   await Octokit.rest.actions.listWorkflowRunsForRepo({
     owner: RepoOwner, repo: RepoName, branch: Message?.Branch, page: Number.MAX_SAFE_INTEGER, per_page: 100 })
     .then((Data) => {
-      var WorkflowRunIDs:Array<number> = []
-      WorkflowRunIDs = Data.data.workflow_runs.map(element => element.workflow_id )
-      for (var WorkFlowRunID of WorkflowRunIDs) {
-        Octokit.rest.actions.getWorkflowRun({ owner: RepoOwner, repo: RepoName, run_id: WorkFlowRunID }).then((Data) => {
-          Octokit.
+      var WorkflowRunIDs:Array<number> = Data.data.workflow_runs.map(element => element.workflow_id )
+      WorkflowRunIDs.forEach((WorkflowRunID) => {
+        Octokit.rest.actions.getWorkflowRun({ owner: RepoOwner, repo: RepoName, run_id: WorkflowRunID }).then((Data) => {
+          if (Data.data.status === 'completed' && Data.data.name === process.env['GITHUB_WORKFLOW_NAME'] &&
+          DateTime.parse(Data.data.created_at, 'YYYY-MM-DD[T]HH:mm:ssZZ').getTime() < LatestWorkflowRunTime) {
+            LatestWorkflowRunTime = DateTime.parse(Data.data.created_at, 'YYYY-MM-DD[T]HH:mm:ssZZ').getTime()
+          }
         })
-      }
+      })
     })
 
   // Get a list of changed files during the duration.
