@@ -4,8 +4,6 @@ import * as GitHub from '@octokit/rest'
 import * as DateTime from 'date-and-time'
 import * as Threads from 'worker_threads'
 
-const CurrentTime = Date.now()
-
 Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   Actions.info(`Thread handling ${Message?.Branch} started.`)
 
