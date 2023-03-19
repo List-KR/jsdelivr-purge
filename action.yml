@@ -6,7 +6,7 @@ inputs:
   branches:
     description: 'The your branches that you want to purge cache existing in jsDelivr'
     required: false
-    default: '["master", "main"]'
+    default: 'master main'
 
   delay:
     description: 'A time that delay between GitHub RAW file service and actual git operation'
@@ -36,6 +36,8 @@ runs:
         echo GITHUB_REPO=${{ github.repository }} >> .env
         echo GITHUB_TOKEN=${{ github.token }} >> .env
         echo GITHUB_WORKFLOW_NAME=${{ github.workflow }} >> .env
+        echo INPUT_BRANCHES=${{ inputs.branches }} >> .env
+        echo INPUT_DELAY=${{ inputs.delay }} >> .env
       shell: bash
       working-directory: ${{ github.action_path }}
     - name: Run compiled scripts

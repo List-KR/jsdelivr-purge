@@ -10,7 +10,7 @@ const RepoName = process.env['GITHUB_REPO'].split('/')[1]
 const RepoOwner = process.env['GITHUB_REPO'].split('/')[0]
 const KnownBranches = await Octokit.rest.repos.listBranches({ owner: RepoOwner, repo: RepoName, page: Number.MAX_SAFE_INTEGER, per_page: 100 })
   .then(Result => Result.data.map(Data => Data.name ))
-var Branches = Actions.getMultilineInput('branches')
+var Branches = process.env['INPUT_BRANCHES'].split(' ')
 var BrancheThreads:Threads.Worker[] = []
 
 // Check if an user selects all branches and selected branches are valid.
@@ -26,8 +26,8 @@ if (Branches.length === 1 && Branches[0] === '**') {
 }
 
 // Check delay input
-if (DateTime.fromFormat(Actions.getInput('delay'), 'HH:mm:ss').isValid) {
-  const Delay = DateTime.fromFormat(Actions.getInput('delay'), 'HH:mm:ss')
+if (DateTime.fromFormat(process.env['INPUT_DELAY'], 'HH:mm:ss').isValid) {
+  const Delay = DateTime.fromFormat(process.env['INPUT_DELAY'], 'HH:mm:ss')
   if (Delay.hour > 12 || (Delay.hour === 12 && (Delay.minute > 0 || Delay.second > 0))) {
     Actions.setFailed('The delay input must be 12 hours or shorter.')
   } else if (Delay.hour === 0 && ((Delay.minute === 30 && Delay.second > 0) || Delay.minute < 30)) {
@@ -35,7 +35,7 @@ if (DateTime.fromFormat(Actions.getInput('delay'), 'HH:mm:ss').isValid) {
   }
 } else {
   Actions.setFailed(`The delay input is invalid format:
-  ${Actions.getInput('delay')}
+  ${process.env['INPUT_DELAY']}
   `)
 }
 
