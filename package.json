@@ -4,7 +4,7 @@
     "@actions/core": "^1.10.0",
     "@actions/exec": "^1.1.1",
     "@octokit/rest": "^19.0.7",
-    "date-and-time": "^2.4.2",
+    "date-and-time": "^2.4.3",
     "dotenv": "^16.0.3",
     "typescript": "^5.0.2"
   },
