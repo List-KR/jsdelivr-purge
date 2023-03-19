@@ -1,9 +1,9 @@
 import * as Actions from '@actions/core'
 import * as Exec from '@actions/exec'
 import * as GitHub from '@octokit/rest'
-import * as DateTime from 'date-and-time'
 import * as Threads from 'worker_threads'
 import * as Dotenv from 'dotenv'
+const DateTime = require('date-and-time')
 
 Dotenv.config()
 

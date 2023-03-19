@@ -1,8 +1,8 @@
 import * as Actions from '@actions/core'
 import * as GitHub from '@octokit/rest'
-import * as DateTime from 'date-and-time'
 import * as Threads from 'worker_threads'
 import * as Dotenv from 'dotenv'
+const DateTime = require('date-and-time')
 
 Dotenv.config()
 const Octokit = new GitHub.Octokit({ auth: process.env['GITHUB_TOKEN'] })
