@@ -10,7 +10,7 @@ const RepoName = process.env['GITHUB_REPO'].split('/')[1]
 const RepoOwner = process.env['GITHUB_REPO'].split('/')[0]
 const KnownBranches = await Octokit.rest.repos.listBranches({ owner: RepoOwner, repo: RepoName, page: Number.MAX_SAFE_INTEGER, per_page: 100 })
   .then(Result => Result.data.map(Data => Data.name ))
-var Branches = Actions.getMultilineInput('branches', { required: true })
+var Branches = Actions.getMultilineInput('branches')
 var BrancheThreads:Threads.Worker[] = []
 
 // Check if an user selects all branches and selected branches are valid.
