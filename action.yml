@@ -11,7 +11,7 @@ inputs:
   delay:
     description: 'A time that delay between GitHub RAW file service and actual git operation'
     required: false
-    default: '1:0:0'
+    default: '01:00:00'
 
 runs:
   using: 'composite'

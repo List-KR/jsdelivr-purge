@@ -36,9 +36,6 @@ if (DateTime.fromFormat(Actions.getInput('delay'), 'HH:mm:ss').isValid) {
 } else {
   Actions.setFailed(`The delay input is invalid format:
   ${Actions.getInput('delay')}
-
-  The valid format is H:m:s. If you want to learn more, please visit the following URL:
-  https://github.com/knowledgecode/date-and-time#parsedatestring-arg-utc
   `)
 }
 
