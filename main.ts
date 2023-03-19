@@ -40,7 +40,7 @@ if (DateTime.fromFormat(process.env['INPUT_DELAY'], 'HH:mm:ss').isValid) {
 }
 
 Actions.info(`The following branches will be processed:
-${Branches.join('\n  - ').replace(/^/, ' - ')}
+${Branches.join('\n  - ').replace(/^/, '  - ')}
 `)
 
 Branches.forEach((Branche, Index) => {
