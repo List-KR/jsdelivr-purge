@@ -30,11 +30,15 @@ runs:
       run: tsc
       shell: bash
       working-directory: ${{ github.action_path }}
+    - name: Create env file
+      run: |
+        touch .env
+        echo GITHUB_REPO=${{ github.repositoriy }} >> .env
+        echo GITHUB_TOKEN=${{ github.token }} >> .env
+        echo GITHUB_WORKFLOW_NAME=${{ github.workflow }} >> .env
+      shell: bash
+      working-directory: ${{ github.action_path }}
     - name: Run compiled scripts
       run: node main.js
       shell: bash
-      env:
-        GITHUB_REPO: ${{ github.repositoriy }}
-        GITHUB_TOKEN: ${{ github.token }}
-        GITHUB_WORKFLOW_NAME: ${{ github.workflow }}
       working-directory: ${{ github.action_path }}
