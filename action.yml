@@ -23,7 +23,12 @@ runs:
     - name: Install npm packages
       run: |
         sudo npm i -g typescript
-        npm i
+        npm i @actions/core
+        npm i @actions/exec
+        npm i @octokit/rest
+        npm i date-and-time
+        npm i dotenv
+        npm i @types/node
       shell: bash
       working-directory: ${{ github.action_path }}
     - name: Compile Typescript
