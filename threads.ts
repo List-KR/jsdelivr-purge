@@ -3,7 +3,7 @@ import * as Exec from '@actions/exec'
 import * as GitHub from '@octokit/rest'
 import * as Threads from 'worker_threads'
 import * as Dotenv from 'dotenv'
-import DateTime from 'date-and-time' // https://github.com/knowledgecode/date-and-time/issues/31
+import { DateTime } from 'luxon'
 
 Dotenv.config()
 
@@ -25,8 +25,8 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
       WorkflowRunIDs.forEach((WorkflowRunID) => {
         Octokit.rest.actions.getWorkflowRun({ owner: RepoOwner, repo: RepoName, run_id: WorkflowRunID }).then((Data) => {
           if (Data.data.status === 'completed' && Data.data.name === process.env['GITHUB_WORKFLOW_NAME'] &&
-          DateTime.parse(Data.data.created_at, 'YYYY-MM-DD[T]HH:mm:ssZZ').getTime() < LatestWorkflowRunTime) {
-            LatestWorkflowRunTime = DateTime.parse(Data.data.created_at, 'YYYY-MM-DD[T]HH:mm:ssZZ').getTime()
+          DateTime.fromFormat(Data.data.created_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis() < LatestWorkflowRunTime) {
+            LatestWorkflowRunTime = DateTime.fromFormat(Data.data.created_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis()
           }
         })
       })
@@ -37,15 +37,16 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
     LatestWorkflowRunTime = 1199145600000 // Jan 1, 2008 - The year that GitHub was founded.
     Actions.info(`This workflow run is first jsdelivr-purge run of ${process.env['GITHUB_REPO']}.`)
   }
-  var CommitTime = new Date(LatestWorkflowRunTime)
-  CommitTime = DateTime.addHours(CommitTime, - DateTime.preparse(Actions.getInput('delay'), 'H:m:s')['H'])
-  CommitTime = DateTime.addMinutes(CommitTime, - DateTime.preparse(Actions.getInput('delay'), 'H:m:s')['m'])
-  CommitTime = DateTime.addSeconds(CommitTime, - DateTime.preparse(Actions.getInput('delay'), 'H:m:s')['s'])
+  var CommitTime:DateTime = DateTime.fromMillis(LatestWorkflowRunTime).minus({
+    hours: DateTime.fromFormat(Actions.getInput('delay'), 'HH:mm:ss').hour,
+    minutes: DateTime.fromFormat(Actions.getInput('delay'), 'HH:mm:ss').minute,
+    seconds: DateTime.fromFormat(Actions.getInput('delay'), 'HH:mm:ss').second
+  })
 
   // Get a list of changed files during the duration.
   await Octokit.rest.repos.listCommits({
     owner: RepoOwner, repo: RepoName, page: Number.MAX_SAFE_INTEGER, per_page: 100,
-    since: DateTime.format(CommitTime, 'YYYY-MM-DD[T]HH:MM:SSZ')})
+    since: CommitTime.toISO()})
     .then((Data) => {
       Data.data.forEach((Commit) => {
         Commit.files.forEach((Files) => {

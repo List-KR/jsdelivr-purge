@@ -2,7 +2,7 @@ import * as Actions from '@actions/core'
 import * as GitHub from '@octokit/rest'
 import * as Threads from 'worker_threads'
 import * as Dotenv from 'dotenv'
-import DateTime from 'date-and-time' // https://github.com/knowledgecode/date-and-time/issues/31
+import { DateTime } from 'luxon'
 
 Dotenv.config()
 const Octokit = new GitHub.Octokit({ auth: process.env['GITHUB_TOKEN'] })
@@ -26,11 +26,11 @@ if (Branches.length === 1 && Branches[0] === '**') {
 }
 
 // Check delay input
-if (DateTime.isValid(Actions.getInput('delay'), 'H:m:s')) {
-  const Delay = DateTime.preparse(Actions.getInput('delay'), 'H:m:s')
-  if (Delay['H'] > 12 || (Delay['H'] === 12 && (Delay['m'] > 0 || Delay['s'] > 0))) {
+if (DateTime.fromFormat(Actions.getInput('delay'), 'HH:mm:ss').isValid) {
+  const Delay = DateTime.fromFormat(Actions.getInput('delay'), 'HH:mm:ss')
+  if (Delay.hour > 12 || (Delay.hour === 12 && (Delay.minute > 0 || Delay.second > 0))) {
     Actions.setFailed('The delay input must be 12 hours or shorter.')
-  } else if (Delay['H'] === 0 && ((Delay['m'] === 30 && Delay['s'] > 0) || Delay['m'] < 30)) {
+  } else if (Delay.hour === 0 && ((Delay.minute === 30 && Delay.second > 0) || Delay.minute < 30)) {
     Actions.setFailed('The delay input must be 30 minutes or longer.')
   }
 } else {
