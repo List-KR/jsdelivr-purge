@@ -33,7 +33,7 @@ runs:
     - name: Create env file
       run: |
         touch .env
-        echo GITHUB_REPO=${{ github.repositoriy }} >> .env
+        echo GITHUB_REPO=${{ github.repository }} >> .env
         echo GITHUB_TOKEN=${{ github.token }} >> .env
         echo GITHUB_WORKFLOW_NAME=${{ github.workflow }} >> .env
       shell: bash
