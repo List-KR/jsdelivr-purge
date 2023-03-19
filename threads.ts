@@ -3,7 +3,7 @@ import * as Exec from '@actions/exec'
 import * as GitHub from '@octokit/rest'
 import * as Threads from 'worker_threads'
 import * as Dotenv from 'dotenv'
-const DateTime = require('date-and-time')
+import DateTime from 'date-and-time' // https://github.com/knowledgecode/date-and-time/issues/31
 
 Dotenv.config()
 
