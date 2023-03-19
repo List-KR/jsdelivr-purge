@@ -2,7 +2,9 @@ import * as Actions from '@actions/core'
 import * as GitHub from '@octokit/rest'
 import * as DateTime from 'date-and-time'
 import * as Threads from 'worker_threads'
+import * as Dotenv from 'dotenv'
 
+Dotenv.config()
 const Octokit = new GitHub.Octokit({ auth: process.env['GITHUB_TOKEN'] })
 const RepoName = process.env['GITHUB_REPO'].split('/')[1]
 const RepoOwner = process.env['GITHUB_REPO'].split('/')[0]

@@ -3,6 +3,9 @@ import * as Exec from '@actions/exec'
 import * as GitHub from '@octokit/rest'
 import * as DateTime from 'date-and-time'
 import * as Threads from 'worker_threads'
+import * as Dotenv from 'dotenv'
+
+Dotenv.config()
 
 Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   Actions.info(`Thread handling ${Message?.Branch} started.`)
