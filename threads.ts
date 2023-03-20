@@ -48,14 +48,15 @@ Threads.parentPort.on('message', async function(Message: string) {
     owner: RepoOwner, repo: RepoName, page: Number.MAX_SAFE_INTEGER, per_page: 100,
     since: CommitTime.toISO()})
     .then((Data) => {
-      Data.data.forEach((Commit) => {
+      for (var Commit of Data.data) {
+        if (typeof Commit.files === 'undefined') continue
         Commit.files.forEach((Files) => {
           ChangedFiles.forEach((Changed) => {
             if (Changed !== Files.previous_filename) ChangedFiles.push(Files.previous_filename)
             if (Changed !== Files.filename) ChangedFiles.push(Files.filename)
           })
         })
-      })
+      }
     })
   
   if (!ChangedFiles.length) {
