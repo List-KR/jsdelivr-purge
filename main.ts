@@ -45,7 +45,7 @@ ${Branches.join('\n  - ').replace(/^/, '  - ')}
 
 Branches.forEach((Branche, Index) => {
   BrancheThreads.push(new Threads.Worker('./threads.js'))
-  BrancheThreads[Index].postMessage({'Branche': Branche})
+  BrancheThreads[Index].postMessage(Branche)
   BrancheThreads[Index].on('exit', () => {
     BrancheThreads = BrancheThreads.filter((element) => element === BrancheThreads[Index])
     if (!BrancheThreads.length) process.exit(0)

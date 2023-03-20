@@ -7,8 +7,8 @@ import { DateTime } from 'luxon'
 
 Dotenv.config()
 
-Threads.parentPort.on('message', async function(Message: {Branch: string}) {
-  Actions.info(`Thread handling ${Message?.Branch} started.`)
+Threads.parentPort.on('message', async function(Message: string) {
+  Actions.info(`Thread handling ${Message} started.`)
 
   // Variables 
   const Octokit = new GitHub.Octokit({ auth: process.env['GITHUB_TOKEN'] })
@@ -19,7 +19,7 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
   
   // Check GitHub workflow history to calcuate duration of commits.
   await Octokit.rest.actions.listWorkflowRunsForRepo({
-    owner: RepoOwner, repo: RepoName, branch: Message?.Branch, page: Number.MAX_SAFE_INTEGER, per_page: 100 })
+    owner: RepoOwner, repo: RepoName, branch: Message, page: Number.MAX_SAFE_INTEGER, per_page: 100 })
     .then((Data) => {
       var WorkflowRunIDs:Array<number> = Data.data.workflow_runs.map(element => element.workflow_id )
       WorkflowRunIDs.forEach((WorkflowRunID) => {
@@ -59,11 +59,11 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
     })
   
   if (!ChangedFiles.length) {
-    Actions.info(`Thread for ${Message?.Branch}: No files changes found. Exiting...`)
+    Actions.info(`Thread for ${Message}: No files changes found. Exiting...`)
     Threads.parentPort.close()
   }
   
-  Actions.info(`Thread for ${Message?.Branch}: Found files changes during from to :
+  Actions.info(`Thread for ${Message}: Found files changes during from to :
   ${ChangedFiles.join('\n  - ').replace(/^/, ' - ')}
   `)
   
@@ -77,13 +77,13 @@ Threads.parentPort.on('message', async function(Message: {Branch: string}) {
       var CDNRequest = await Exec.getExecOutput(`curl -X POST https://purge.jsdelivr.net/ 
       -H 'cache-control: no-cache' 
       -H 'content-type: application/json' 
-      -d '{"path":["/gh/${RepoOwner}/${RepoName}@${Message?.Branch}/${Changed}"]}'`)
+      -d '{"path":["/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}"]}'`)
       .then(Result => Result.stdout )
-      Actions.info(`Thread for ${Message?.Branch}: Sent new request having ${JSON.parse(CDNRequest)['id']} ID.`)
+      Actions.info(`Thread for ${Message}: Sent new request having ${JSON.parse(CDNRequest)['id']} ID.`)
       CDNResponses.push(JSON.parse(CDNRequest)['id'])
     }
-    Actions.info(`Thread for ${Message?.Branch}: Purged ${Changed}.`)
+    Actions.info(`Thread for ${Message}: Purged ${Changed}.`)
   })
-  Actions.info(`Thread for ${Message?.Branch}: All changed files are purged. Exiting...`)
+  Actions.info(`Thread for ${Message}: All changed files are purged. Exiting...`)
   Threads.parentPort.close()
 })
