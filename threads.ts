@@ -38,9 +38,9 @@ Threads.parentPort.on('message', async function(Message: string) {
     Actions.info(`This workflow run is first jsdelivr-purge run of ${process.env['GITHUB_REPO']}.`)
   }
   var CommitTime:DateTime = DateTime.fromMillis(LatestWorkflowRunTime).minus({
-    hours: DateTime.fromFormat(process.env['INPUT_DELAY'], 'HH:mm:ss').hour,
-    minutes: DateTime.fromFormat(process.env['INPUT_DELAY'], 'HH:mm:ss').minute,
-    seconds: DateTime.fromFormat(process.env['INPUT_DELAY'], 'HH:mm:ss').second
+    hours: DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s').hour,
+    minutes: DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s').minute,
+    seconds: DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s').second
   })
 
   // Get a list of changed files during the duration.

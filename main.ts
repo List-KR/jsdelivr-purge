@@ -26,8 +26,8 @@ if (Branches.length === 1 && Branches[0] === '**') {
 }
 
 // Check delay input
-if (DateTime.fromFormat(process.env['INPUT_DELAY'], 'HH:mm:ss').isValid) {
-  const Delay = DateTime.fromFormat(process.env['INPUT_DELAY'], 'HH:mm:ss')
+if (DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s').isValid) {
+  const Delay = DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s')
   if (Delay.hour > 12 || (Delay.hour === 12 && (Delay.minute > 0 || Delay.second > 0))) {
     Actions.setFailed('The delay input must be 12 hours or shorter.')
   } else if (Delay.hour === 0 && ((Delay.minute === 30 && Delay.second > 0) || Delay.minute < 30)) {
