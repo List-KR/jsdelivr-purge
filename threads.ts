@@ -62,9 +62,10 @@ Threads.parentPort.on('message', async function(Message: string) {
   if (!ChangedFiles.length) {
     Actions.info(`Thread for ${Message}: No files changes found. Exiting...`)
     Threads.parentPort.close()
+    process.exit(0)
   }
   
-  Actions.info(`Thread for ${Message}: Found files changes during from to :
+  Actions.info(`Thread for ${Message}: Found files changes during from ${CommitTime.toISO()}:
   ${ChangedFiles.join('\n  - ').replace(/^/, ' - ')}
   `)
   
@@ -87,4 +88,5 @@ Threads.parentPort.on('message', async function(Message: string) {
   })
   Actions.info(`Thread for ${Message}: All changed files are purged. Exiting...`)
   Threads.parentPort.close()
+  process.exit(0)
 })
