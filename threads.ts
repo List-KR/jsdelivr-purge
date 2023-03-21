@@ -48,15 +48,14 @@ Threads.parentPort.on('message', async function(Message: string) {
     owner: RepoOwner, repo: RepoName, page: Number.MAX_SAFE_INTEGER, per_page: 100,
     since: CommitTime.toISO()})
     .then((Data) => {
-      for (var Commit of Data.data) {
-        if (typeof Commit.files === 'undefined') continue
-        Commit.files.forEach((Files) => {
-          ChangedFiles.forEach((Changed) => {
-            if (Changed !== Files.previous_filename) ChangedFiles.push(Files.previous_filename)
-            if (Changed !== Files.filename) ChangedFiles.push(Files.filename)
-          })
+      Data.data.forEach((Commit) => {
+        Octokit.rest.git.getTree({ owner: RepoOwner, repo: RepoName, tree_sha: Commit.commit.tree.sha }).then((TreeData) => {
+          for (var Tree of TreeData.data.tree) {
+            if (typeof Tree.path === 'undefined') continue
+            if (!(ChangedFiles.some((ChangedFile) => { return ChangedFile === Tree.path }))) ChangedFiles.push(Tree.path)
+          }
         })
-      }
+      })
     })
   
   if (!ChangedFiles.length) {
