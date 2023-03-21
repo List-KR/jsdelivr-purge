@@ -18,17 +18,15 @@ Threads.parentPort.on('message', async function(Message: string) {
   var LatestWorkflowRunTime:number = Number.MAX_SAFE_INTEGER
   
   // Check GitHub workflow history to calcuate duration of commits.
-  await Octokit.rest.actions.listWorkflowRunsForRepo({
-    owner: RepoOwner, repo: RepoName, branch: Message, page: Number.MAX_SAFE_INTEGER, per_page: 100 })
+  await Octokit.rest.actions.listWorkflowRuns({
+    owner: RepoOwner, repo: RepoName, workflow_id: process.env['GITHUB_WORKFLOW_REF'].match(new RegExp(`(?<=${process.env['GITHUB_REPO']}\/)\.github\/workflows\/.+\.yml(?=@refs\/)`))[0],
+    page: Number.MAX_SAFE_INTEGER, per_page: 100 })
     .then((Data) => {
-      var WorkflowRunIDs:Array<number> = Data.data.workflow_runs.map(element => element.workflow_id )
-      WorkflowRunIDs.forEach((WorkflowRunID) => {
-        Octokit.rest.actions.getWorkflowRun({ owner: RepoOwner, repo: RepoName, run_id: WorkflowRunID }).then((Data) => {
-          if (Data.data.status === 'completed' && Data.data.name === process.env['GITHUB_WORKFLOW_NAME'] &&
-          DateTime.fromFormat(Data.data.created_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis() < LatestWorkflowRunTime) {
-            LatestWorkflowRunTime = DateTime.fromFormat(Data.data.created_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis()
-          }
-        })
+      Data.data.workflow_runs.forEach((Run) => {
+        if (Run.status === 'completed' && Run.conclusion === 'success' &&
+        DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis() < LatestWorkflowRunTime) {
+          LatestWorkflowRunTime = DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis()
+        }
       })
     })
 
