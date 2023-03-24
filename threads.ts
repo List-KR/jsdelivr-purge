@@ -18,16 +18,15 @@ Threads.parentPort.on('message', async function(Message: string) {
   let LatestWorkflowRunTime:number = Number.MAX_SAFE_INTEGER
   
   // Check GitHub workflow history to calcuate duration of commits.
-  await Octokit.rest.actions.listWorkflowRuns({
+  const ListWorkflowRuns = await Octokit.rest.actions.listWorkflowRuns({
     owner: RepoOwner, repo: RepoName, workflow_id: process.env['GITHUB_WORKFLOW_REF'].match(new RegExp(`(?<=${Lodash.escapeRegExp(process.env['GITHUB_REPO'])}\/)\.github\/workflows\/.+\.yml(?=@refs\/)`))[0],
     page: Number.MAX_SAFE_INTEGER, per_page: 100 })
-    .then((Data) => {
-      Data.data.workflow_runs.forEach((Run) => {
-        if (Run.status === 'completed' && Run.conclusion === 'success' &&
-        DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis() < LatestWorkflowRunTime) {
-          LatestWorkflowRunTime = DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis()
-        }
-      })
+
+    ListWorkflowRuns.data.workflow_runs.forEach((Run) => {
+      if (Run.status === 'completed' && Run.conclusion === 'success' &&
+      DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis() < LatestWorkflowRunTime) {
+        LatestWorkflowRunTime = DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis()
+      }
     })
 
   // Calcuate time including the delay.
@@ -35,26 +34,27 @@ Threads.parentPort.on('message', async function(Message: string) {
     LatestWorkflowRunTime = 1199145600000 // Jan 1, 2008 - The year that GitHub was founded.
     Actions.info(`This workflow run is first jsdelivr-purge run of ${process.env['GITHUB_REPO']}.`)
   }
+
+  const DateTimeDelay = DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s'); 
   const CommitTime:DateTime = DateTime.fromMillis(LatestWorkflowRunTime).minus({
-    hours: DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s').hour,
-    minutes: DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s').minute,
-    seconds: DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s').second
+    hours: DateTimeDelay.hour,
+    minutes: DateTimeDelay.minute,
+    seconds: DateTimeDelay.second
   })
 
   // Get a list of changed files during the duration.
-  await Octokit.rest.repos.listCommits({
+  const ListCommits = await Octokit.rest.repos.listCommits({
     owner: RepoOwner, repo: RepoName, page: Number.MAX_SAFE_INTEGER, per_page: 100,
     since: CommitTime.toISO()})
-    .then((Data) => {
-      Data.data.forEach((Commit) => {
-        Octokit.rest.git.getTree({ owner: RepoOwner, repo: RepoName, tree_sha: Commit.commit.tree.sha }).then((TreeData) => {
-          for (const Tree of TreeData.data.tree) {
-            if (typeof Tree.path === 'undefined') continue
-            if (!(ChangedFiles.some((ChangedFile) => { return ChangedFile === Tree.path })) || ChangedFiles.length === 0) ChangedFiles.push(Tree.path)
-          }
-        })
+
+    ListCommits.data.forEach((Commit) => {
+      Octokit.rest.git.getTree({ owner: RepoOwner, repo: RepoName, tree_sha: Commit.commit.tree.sha }).then((TreeData) => {
+        for (const Tree of TreeData.data.tree) {
+          if (typeof Tree.path === 'undefined') continue
+          if (!(ChangedFiles.some((ChangedFile) => { return ChangedFile === Tree.path })) || ChangedFiles.length === 0) ChangedFiles.push(Tree.path)
+        }
       })
-    })
+  })
   
   if (!ChangedFiles.length) {
     Actions.info(`Thread for ${Message}: No files changes found. Exiting...`)
