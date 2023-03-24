@@ -18,11 +18,11 @@ Threads.parentPort.on('message', async function(Message: string) {
   let LatestWorkflowRunTime:number = Number.MAX_SAFE_INTEGER
   
   // Check GitHub workflow history to calcuate duration of commits.
-  const Data = await Octokit.rest.actions.listWorkflowRuns({
+  const ListWorkflowRuns = await Octokit.rest.actions.listWorkflowRuns({
     owner: RepoOwner, repo: RepoName, workflow_id: process.env['GITHUB_WORKFLOW_REF'].match(new RegExp(`(?<=${Lodash.escapeRegExp(process.env['GITHUB_REPO'])}\/)\.github\/workflows\/.+\.yml(?=@refs\/)`))[0],
     page: Number.MAX_SAFE_INTEGER, per_page: 100 })
 
-    Data.data.workflow_runs.forEach((Run) => {
+    ListWorkflowRuns.data.workflow_runs.forEach((Run) => {
       if (Run.status === 'completed' && Run.conclusion === 'success' &&
       DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis() < LatestWorkflowRunTime) {
         LatestWorkflowRunTime = DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis()
@@ -35,19 +35,19 @@ Threads.parentPort.on('message', async function(Message: string) {
     Actions.info(`This workflow run is first jsdelivr-purge run of ${process.env['GITHUB_REPO']}.`)
   }
 
-  const parse = DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s'); 
+  const DateTimeDelay = DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s'); 
   const CommitTime:DateTime = DateTime.fromMillis(LatestWorkflowRunTime).minus({
-    hours: parse.hour,
-    minutes: parse.minute,
-    seconds: parse.second
+    hours: DateTimeDelay.hour,
+    minutes: DateTimeDelay.minute,
+    seconds: DateTimeDelay.second
   })
 
   // Get a list of changed files during the duration.
-  const Data2 = await Octokit.rest.repos.listCommits({
+  const ListCommits = await Octokit.rest.repos.listCommits({
     owner: RepoOwner, repo: RepoName, page: Number.MAX_SAFE_INTEGER, per_page: 100,
     since: CommitTime.toISO()})
 
-    Data2.data.forEach((Commit) => {
+    ListCommits.data.forEach((Commit) => {
       Octokit.rest.git.getTree({ owner: RepoOwner, repo: RepoName, tree_sha: Commit.commit.tree.sha }).then((TreeData) => {
         for (const Tree of TreeData.data.tree) {
           if (typeof Tree.path === 'undefined') continue
