@@ -69,10 +69,10 @@ Threads.parentPort.on('message', async function(Message: string) {
   ChangedFiles.forEach(async (Changed) => {
     const CDNResponses:Array<string> = []
     while(CDNResponses.every(async (CDNResponse) => {
-      var CDNStatus = JSON.parse(await Exec.getExecOutput(`curl -X GET https://purge.jsdelivr.net/status/${CDNResponse}`).then(Result => Result.stdout ))['status']
+      const CDNStatus = JSON.parse(await Exec.getExecOutput(`curl -X GET https://purge.jsdelivr.net/status/${CDNResponse}`).then(Result => Result.stdout ))['status']
       return !(CDNStatus === 'finished' || CDNStatus === 'failed')
     })) {
-      var CDNRequest = await Exec.getExecOutput(`curl -X POST https://purge.jsdelivr.net/ 
+      const CDNRequest = await Exec.getExecOutput(`curl -X POST https://purge.jsdelivr.net/ 
       -H 'cache-control: no-cache' 
       -H 'content-type: application/json' 
       -d '{"path":["/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}"]}'`)
