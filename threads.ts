@@ -12,10 +12,9 @@ Threads.parentPort.on('message', async function(Message: string) {
 
   // Variables 
   const Octokit = new GitHub.Octokit({ auth: process.env['GITHUB_TOKEN'] })
-  const RepoName = process.env['GITHUB_REPO'].split('/')[1]
-  const RepoOwner = process.env['GITHUB_REPO'].split('/')[0]
-  var ChangedFiles:Array<string> = []
-  var LatestWorkflowRunTime:number = Number.MAX_SAFE_INTEGER
+  const [RepoOwner, RepoName] = process.env['GITHUB_REPO'].split('/')
+  const ChangedFiles:string[] = []
+  let LatestWorkflowRunTime:number = Number.MAX_SAFE_INTEGER
   
   // Check GitHub workflow history to calcuate duration of commits.
   await Octokit.rest.actions.listWorkflowRuns({
@@ -35,7 +34,7 @@ Threads.parentPort.on('message', async function(Message: string) {
     LatestWorkflowRunTime = 1199145600000 // Jan 1, 2008 - The year that GitHub was founded.
     Actions.info(`This workflow run is first jsdelivr-purge run of ${process.env['GITHUB_REPO']}.`)
   }
-  var CommitTime:DateTime = DateTime.fromMillis(LatestWorkflowRunTime).minus({
+  const CommitTime:DateTime = DateTime.fromMillis(LatestWorkflowRunTime).minus({
     hours: DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s').hour,
     minutes: DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s').minute,
     seconds: DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s').second
@@ -48,7 +47,7 @@ Threads.parentPort.on('message', async function(Message: string) {
     .then((Data) => {
       Data.data.forEach((Commit) => {
         Octokit.rest.git.getTree({ owner: RepoOwner, repo: RepoName, tree_sha: Commit.commit.tree.sha }).then((TreeData) => {
-          for (var Tree of TreeData.data.tree) {
+          for (const Tree of TreeData.data.tree) {
             if (typeof Tree.path === 'undefined') continue
             if (!(ChangedFiles.some((ChangedFile) => { return ChangedFile === Tree.path })) || ChangedFiles.length === 0) ChangedFiles.push(Tree.path)
           }
@@ -68,7 +67,7 @@ Threads.parentPort.on('message', async function(Message: string) {
   
   // Make requests
   ChangedFiles.forEach(async (Changed) => {
-    var CDNResponses:Array<string> = []
+    const CDNResponses:Array<string> = []
     while(CDNResponses.every(async (CDNResponse) => {
       var CDNStatus = JSON.parse(await Exec.getExecOutput(`curl -X GET https://purge.jsdelivr.net/status/${CDNResponse}`).then(Result => Result.stdout ))['status']
       return !(CDNStatus === 'finished' || CDNStatus === 'failed')
