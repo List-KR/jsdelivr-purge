@@ -50,7 +50,7 @@ Threads.parentPort.on('message', async function(Message: string) {
         Octokit.rest.git.getTree({ owner: RepoOwner, repo: RepoName, tree_sha: Commit.commit.tree.sha }).then((TreeData) => {
           for (var Tree of TreeData.data.tree) {
             if (typeof Tree.path === 'undefined') continue
-            if (!(ChangedFiles.some((ChangedFile) => { return ChangedFile === Tree.path }))) ChangedFiles.push(Tree.path)
+            if (!(ChangedFiles.some((ChangedFile) => { return ChangedFile === Tree.path })) || ChangedFiles.length === 0) ChangedFiles.push(Tree.path)
           }
         })
       })
