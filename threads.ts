@@ -18,7 +18,7 @@ Threads.parentPort.on('message', async function(Message: string) {
   
   // Check GitHub workflow history to calcuate duration of commits.
   const ListWorkflowRuns = await Octokit.rest.actions.listWorkflowRuns({
-    owner: RepoOwner, repo: RepoName, workflow_id: process.env['GITHUB_WORKFLOW_REF'].match(new RegExp(`(?<=${process.env['GITHUB_REPO']}\/)\.github\/workflows\/.+\.yml(?=@refs\/)`))[0],
+    owner: RepoOwner, repo: RepoName, workflow_id: process.env['GITHUB_WORKFLOW_REF'].match(new RegExp(`(?<=${process.env['GITHUB_REPO']}\/\.github\/workflows\/).+\.yml(?=@refs\/)`))[0],
     page: Number.MAX_SAFE_INTEGER, per_page: 100 })
 
     ListWorkflowRuns.data.workflow_runs.forEach((Run) => {
