@@ -1,5 +1,5 @@
 import * as Actions from '@actions/core'
-import * as Exec from '@actions/exec'
+import * as Got from 'got'
 import * as GitHub from '@octokit/rest'
 import * as Threads from 'worker_threads'
 import * as Dotenv from 'dotenv'
@@ -70,16 +70,15 @@ Threads.parentPort.on('message', async function(Message: string) {
   ChangedFiles.forEach(async (Changed) => {
     const CDNResponses:Array<string> = []
     while(CDNResponses.every(async (CDNResponse) => {
-      const CDNStatus = JSON.parse(await Exec.getExecOutput(`curl -X GET https://purge.jsdelivr.net/status/${CDNResponse}`).then(Result => Result.stdout ))['status']
-      return !(CDNStatus === 'finished' || CDNStatus === 'failed')
+      const CDNStatus:JSON = await Got.got.get(`https://purge.jsdelivr.net/status/${CDNResponse}`, { https: { minVersion: 'TLSv1.3' }}).json()
+      return !(CDNStatus['status'] === 'finished' || CDNStatus['status'] === 'failed')
     })) {
-      const CDNRequest = await Exec.getExecOutput(`curl -X POST https://purge.jsdelivr.net/ 
-      -H 'cache-control: no-cache' 
-      -H 'content-type: application/json' 
-      -d '{"path":["/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}"]}'`)
-      .then(Result => Result.stdout )
-      Actions.info(`Thread for ${Message}: Sent new request having ${JSON.parse(CDNRequest)['id']} ID.`)
-      CDNResponses.push(JSON.parse(CDNRequest)['id'])
+      const CDNRequest:JSON = await Got.got.post('https://purge.jsdelivr.net/', {
+        headers: { 'cache-control': 'no-cache' },
+        body: `{"path":["/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}"]}`,
+        https: { 'minVersion': 'TLSv1.3' }}).json()
+      Actions.info(`Thread for ${Message}: Sent new request having ${CDNRequest['id']} ID.`)
+      CDNResponses.push(CDNRequest['id'])
     }
     Actions.info(`Thread for ${Message}: Purged ${Changed}.`)
   })
