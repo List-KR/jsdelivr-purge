@@ -7,7 +7,6 @@
     "@types/luxon": "^3.2.0",
     "dotenv": "^16.0.3",
     "got": "^12.6.0",
-    "lodash": "^4.17.21",
     "luxon": "^3.3.0",
     "typescript": "^5.0.2"
   },
