@@ -1,3 +1,4 @@
+import * as Actions from '@actions/core'
 import * as GitHub from '@octokit/rest'
 import * as Dotenv from 'dotenv'
 
@@ -14,13 +15,14 @@ interface CommitData {
 	url?: string
 }
 
-export async function Parse(CommitData:CommitData[], DirectoryPrefix:string) {
+export async function Parse(CommitData:CommitData[], DirectoryPrefix:string, Branch:string) {
 	var ChangedFiles:string[] = []
 	for (const Tree of CommitData) {
+		Actions.info(`Thread for ${Branch}: Looking up: ${DirectoryPrefix ?? ''}${Tree.path}`)
 		if (Tree.type === 'blob') ChangedFiles.push(`${DirectoryPrefix ?? ''}${Tree.path}`)
 		if (Tree.type === 'tree') {
 			ChangedFiles = ChangedFiles.concat(await Parse(await Octokit.rest.git.getTree(
-				{ owner: RepoOwner, repo: RepoOwner, tree_sha: Tree.sha }).then((Data) => { return Data.data.tree }), `${DirectoryPrefix ?? ''}${Tree.path}/`))	
+				{ owner: RepoOwner, repo: RepoOwner, tree_sha: Tree.sha }).then((Data) => { return Data.data.tree }), `${DirectoryPrefix ?? ''}${Tree.path}/`, Branch))
 		}
 	}
 	return ChangedFiles
