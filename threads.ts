@@ -17,16 +17,16 @@ Threads.parentPort.on('message', async function(Message: string) {
   let LatestWorkflowRunTime:number = Number.MAX_SAFE_INTEGER
   
   // Check GitHub workflow history to calcuate duration of commits.
-  const ListWorkflowRuns = await Octokit.rest.actions.listWorkflowRuns({
-    owner: RepoOwner, repo: RepoName, workflow_id: process.env['GITHUB_WORKFLOW_REF'].match(new RegExp(`(?<=${process.env['GITHUB_REPO']}\/\.github\/workflows\/).+\.yml(?=@refs\/)`))[0],
-    page: Number.MAX_SAFE_INTEGER, per_page: 100 })
-
-    ListWorkflowRuns.data.workflow_runs.forEach((Run) => {
+  await Octokit.rest.actions.listWorkflowRuns({
+  owner: RepoOwner, repo: RepoName, workflow_id: process.env['GITHUB_WORKFLOW_REF'].match(new RegExp(`(?<=${process.env['GITHUB_REPO']}\/\.github\/workflows\/).+\.yml(?=@refs\/)`))[0],
+  page: Number.MAX_SAFE_INTEGER, per_page: 100 }).then(async (ListWorkflowRuns) => {
+    for (const Run of ListWorkflowRuns.data.workflow_runs) {
       if (Run.status === 'completed' && Run.conclusion === 'success' &&
       DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis() < LatestWorkflowRunTime) {
         LatestWorkflowRunTime = DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis()
       }
-    })
+    }
+  })
 
   // Calcuate time including the delay.
   if (LatestWorkflowRunTime === Number.MAX_SAFE_INTEGER) {
@@ -42,17 +42,17 @@ Threads.parentPort.on('message', async function(Message: string) {
   })
 
   // Get a list of changed files during the duration.
-  const ListCommits = await Octokit.rest.repos.listCommits({
-    owner: RepoOwner, repo: RepoName, page: Number.MAX_SAFE_INTEGER, per_page: 100,
-    since: CommitTime.toISO()})
-
-    ListCommits.data.forEach((Commit) => {
-      Octokit.rest.git.getTree({ owner: RepoOwner, repo: RepoName, tree_sha: Commit.commit.tree.sha }).then((TreeData) => {
+  await Octokit.rest.repos.listCommits({
+  owner: RepoOwner, repo: RepoName, page: Number.MAX_SAFE_INTEGER, per_page: 100,
+  since: CommitTime.toISO()}).then(async (ListCommits) => {
+    for (const Commit of ListCommits.data) {
+      await Octokit.rest.git.getTree({ owner: RepoOwner, repo: RepoName, tree_sha: Commit.commit.tree.sha }).then((TreeData) => {
         for (const Tree of TreeData.data.tree) {
           if (typeof Tree.path === 'undefined') continue
           if (!(ChangedFiles.some((ChangedFile) => { return ChangedFile === Tree.path })) || ChangedFiles.length === 0) ChangedFiles.push(Tree.path)
         }
       })
+    }
   })
   
   if (!ChangedFiles.length) {
@@ -66,7 +66,7 @@ Threads.parentPort.on('message', async function(Message: string) {
   `)
   
   // Make requests
-  ChangedFiles.forEach(async (Changed) => {
+  for (const Changed of ChangedFiles) {
     const CDNResponses:Array<string> = []
     while(CDNResponses.every(async (CDNResponse) => {
       const CDNStatus:JSON = await Got.got.get(`https://purge.jsdelivr.net/status/${CDNResponse}`, { https: { minVersion: 'TLSv1.3' }}).json()
@@ -80,7 +80,7 @@ Threads.parentPort.on('message', async function(Message: string) {
       CDNResponses.push(CDNRequest['id'])
     }
     Actions.info(`Thread for ${Message}: Purged ${Changed}.`)
-  })
+  }
   Actions.info(`Thread for ${Message}: All changed files are purged. Exiting...`)
   Threads.parentPort.close()
   process.exit(0)
