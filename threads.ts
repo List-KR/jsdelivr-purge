@@ -4,16 +4,17 @@ import * as GitHub from '@octokit/rest'
 import * as Threads from 'worker_threads'
 import * as Dotenv from 'dotenv'
 import { DateTime } from 'luxon'
+import * as CommitParse from './commit-parse.js'
 
 Dotenv.config()
 
-Threads.parentPort.on('message', async function(Message: string) {
+Threads.parentPort.on('message', async (Message: string) => {
   Actions.info(`Thread handling ${Message} started.`)
 
   // Variables 
   const Octokit = new GitHub.Octokit({ auth: process.env['GITHUB_TOKEN'] })
   const [RepoOwner, RepoName] = process.env['GITHUB_REPO'].split('/')
-  const ChangedFiles:string[] = []
+  var ChangedFiles:string[] = []
   let LatestWorkflowRunTime:number = Number.MAX_SAFE_INTEGER
   
   // Check GitHub workflow history to calcuate duration of commits.
@@ -46,11 +47,10 @@ Threads.parentPort.on('message', async function(Message: string) {
   owner: RepoOwner, repo: RepoName, per_page: Number.MAX_SAFE_INTEGER,
   since: CommitTime.toISO()}).then(async (ListCommits) => {
     for (const Commit of ListCommits.data) {
-      await Octokit.rest.git.getTree({ owner: RepoOwner, repo: RepoName, tree_sha: Commit.commit.tree.sha }).then((TreeData) => {
-        for (const Tree of TreeData.data.tree) {
-          if (typeof Tree.path === 'undefined') continue
-          if (!(ChangedFiles.some((ChangedFile) => { return ChangedFile === Tree.path })) || ChangedFiles.length === 0) ChangedFiles.push(Tree.path)
-        }
+      await Octokit.rest.git.getTree({ owner: RepoOwner, repo: RepoName, tree_sha: Commit.commit.tree.sha }).then(async (CommitData) => {
+        ChangedFiles = ChangedFiles.concat((await CommitParse.Parse(CommitData.data.tree, null)).filter((CommitChangedFile) => {
+          return !(ChangedFiles.some((ChangedFile) => { return ChangedFile === CommitChangedFile })) || !ChangedFiles.length
+        }))
       })
     }
   })
