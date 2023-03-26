@@ -19,7 +19,7 @@ Threads.parentPort.on('message', async function(Message: string) {
   // Check GitHub workflow history to calcuate duration of commits.
   await Octokit.rest.actions.listWorkflowRuns({
   owner: RepoOwner, repo: RepoName, workflow_id: process.env['GITHUB_WORKFLOW_REF'].match(new RegExp(`(?<=${process.env['GITHUB_REPO']}\/\.github\/workflows\/).+\.yml(?=@refs\/)`))[0],
-  page: Number.MAX_SAFE_INTEGER, per_page: 100 }).then(async (ListWorkflowRuns) => {
+  per_page: Number.MAX_SAFE_INTEGER }).then(async (ListWorkflowRuns) => {
     for (const Run of ListWorkflowRuns.data.workflow_runs) {
       if (Run.status === 'completed' && Run.conclusion === 'success' &&
       DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis() < LatestWorkflowRunTime) {
@@ -43,7 +43,7 @@ Threads.parentPort.on('message', async function(Message: string) {
 
   // Get a list of changed files during the duration.
   await Octokit.rest.repos.listCommits({
-  owner: RepoOwner, repo: RepoName, page: Number.MAX_SAFE_INTEGER, per_page: 100,
+  owner: RepoOwner, repo: RepoName, per_page: Number.MAX_SAFE_INTEGER,
   since: CommitTime.toISO()}).then(async (ListCommits) => {
     for (const Commit of ListCommits.data) {
       await Octokit.rest.git.getTree({ owner: RepoOwner, repo: RepoName, tree_sha: Commit.commit.tree.sha }).then((TreeData) => {
