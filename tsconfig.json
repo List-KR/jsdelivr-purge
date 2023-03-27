@@ -4,6 +4,7 @@
     "target": "ES2022",
     "moduleResolution": "nodenext",
     "removeComments": true,
-    "alwaysStrict": true
+    "alwaysStrict": true,
+    "skipLibCheck": true
   }
 }
