@@ -74,7 +74,9 @@ Threads.parentPort.on('message', async (Message: string) => {
     })) {
       const CDNRequest:JSON = await Got.got.post('https://purge.jsdelivr.net/', {
         headers: { 'cache-control': 'no-cache' },
-        body: `{"path":["/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}"]}`}).json()
+        json: {
+          'path': [`/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}`]
+        }}).json()
       Actions.info(`Thread for ${Message}: Sent new request having ${CDNRequest['id']} ID.`)
       CDNResponses.push(CDNRequest['id'])
     }
