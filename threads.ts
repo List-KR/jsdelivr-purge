@@ -31,7 +31,7 @@ Threads.parentPort.on('message', async (Message: string) => {
 
   // Calcuate time including the delay.
   if (LatestWorkflowRunTime === Number.MAX_SAFE_INTEGER) {
-    LatestWorkflowRunTime = 1199145600000 // Jan 1, 2008 - The year that GitHub was founded.
+    LatestWorkflowRunTime = DateTime.fromMillis(Date.now()).minus({ day: DateTime.fromFormat('7', 'd').day }).toMillis()
     Actions.info(`This workflow run is first jsdelivr-purge run of ${process.env['GITHUB_REPO']}.`)
   }
 
