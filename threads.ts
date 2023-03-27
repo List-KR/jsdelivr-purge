@@ -31,11 +31,11 @@ Threads.parentPort.on('message', async (Message: string) => {
 
   // Calcuate time including the delay.
   if (LatestWorkflowRunTime === Number.MAX_SAFE_INTEGER) {
-    LatestWorkflowRunTime = DateTime.fromMillis(Date.now()).minus({ day: DateTime.fromFormat('7', 'd').day }).toMillis()
+    LatestWorkflowRunTime = Date.now()
     Actions.info(`This workflow run is first jsdelivr-purge run of ${process.env['GITHUB_REPO']}.`)
   }
 
-  const DateTimeDelay = DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s'); 
+  const DateTimeDelay = DateTime.fromFormat(process.env['INPUT_DELAY'], 'H:m:s')
   const CommitTime:DateTime = DateTime.fromMillis(LatestWorkflowRunTime).minus({
     hours: DateTimeDelay.hour,
     minutes: DateTimeDelay.minute,
