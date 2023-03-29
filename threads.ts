@@ -15,7 +15,7 @@ Threads.parentPort.on('message', async (Message: string) => {
   const Octokit = new GitHub.Octokit({ auth: process.env['GITHUB_TOKEN'] })
   const [RepoOwner, RepoName] = process.env['GITHUB_REPO'].split('/')
   var ChangedFiles:string[] = []
-  let LatestWorkflowRunTime:number = Number.MAX_SAFE_INTEGER
+  let LatestWorkflowRunTime:number = Number.MIN_SAFE_INTEGER
   
   // Check GitHub workflow history to calcuate duration of commits.
   await Octokit.rest.actions.listWorkflowRuns({
@@ -23,14 +23,14 @@ Threads.parentPort.on('message', async (Message: string) => {
   per_page: Number.MAX_SAFE_INTEGER }).then(async (ListWorkflowRuns) => {
     for (const Run of ListWorkflowRuns.data.workflow_runs) {
       if (Run.status === 'completed' && Run.conclusion === 'success' &&
-      DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis() < LatestWorkflowRunTime) {
-        LatestWorkflowRunTime = DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ssZZ").toMillis()
+      DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ss'Z'").toMillis() > LatestWorkflowRunTime) {
+        LatestWorkflowRunTime = DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ss'Z'").toMillis()
       }
     }
   })
 
   // Calcuate time including the delay.
-  if (LatestWorkflowRunTime === Number.MAX_SAFE_INTEGER) {
+  if (LatestWorkflowRunTime === Number.MIN_SAFE_INTEGER) {
     LatestWorkflowRunTime = Date.now()
     Actions.info(`This workflow run is first jsdelivr-purge run of ${process.env['GITHUB_REPO']}.`)
   }
