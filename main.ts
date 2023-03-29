@@ -7,7 +7,7 @@ import { DateTime } from 'luxon'
 Dotenv.config()
 const Octokit = new GitHub.Octokit({ auth: process.env['GITHUB_TOKEN'] })
 const [RepoOwner, RepoName] = process.env['GITHUB_REPO'].split('/')
-const KnownBranches = await Octokit.rest.repos.listBranches({ owner: RepoOwner, repo: RepoName, page: Number.MAX_SAFE_INTEGER, per_page: 100 })
+const KnownBranches = await Octokit.rest.repos.listBranches({ owner: RepoOwner, repo: RepoName, per_page: Number.MAX_SAFE_INTEGER })
   .then(Result => Result.data.map(Data => Data.name))
 let Branches = process.env['INPUT_BRANCHES'].split(' ')
 let BrancheThreads:Threads.Worker[] = []
