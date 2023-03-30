@@ -83,6 +83,7 @@ Threads.parentPort.on('message', async (Message: string) => {
     Actions.info(`Thread for ${Message}: Purged ${Changed}.`)
   }
   Actions.info(`Thread for ${Message}: All changed files are purged. Exiting...`)
+  await new Promise(resolve => setTimeout(resolve, 1000))
   Threads.parentPort.close()
   process.exit(0)
 })
