@@ -15,15 +15,19 @@ interface CommitData {
   url?: string
 }
 
-export async function Parse(CommitData:CommitData[], DirectoryPrefix:string, Branch:string) {
-  var ChangedFiles:string[] = []
+async function Inspect(CommitData:CommitData[], DirectoryPrefix:string, Branch:string) {
+  var ChangedFiles:CommitData[] = []
   for (const Tree of CommitData) {
-    Actions.info(`Thread for ${Branch}: Looking up with ${Tree.sha}: ${DirectoryPrefix ?? ''}${Tree.path}`)
-    if (Tree.type === 'blob') ChangedFiles.push(`${DirectoryPrefix ?? ''}${Tree.path}`)
+    Actions.info(`Thread for ${Branch}: Looking up with ${Tree.sha}: ${DirectoryPrefix}${Tree.path}`)
+    if (Tree.type === 'blob') ChangedFiles.push({path: `${DirectoryPrefix}${Tree.path}`, mode: 'blob'})
     if (Tree.type === 'tree') {
-      ChangedFiles = ChangedFiles.concat(await Parse(await Octokit.rest.git.getTree(
-        { owner: RepoOwner, repo: RepoName, tree_sha: Tree.sha }).then((Data) => { return Data.data.tree }), `${DirectoryPrefix ?? ''}${Tree.path}/`, Branch))
+      ChangedFiles = ChangedFiles.concat(await Inspect(await Octokit.rest.git.getTree(
+        { owner: RepoOwner, repo: RepoName, tree_sha: Tree.sha }).then((Data) => { return Data.data.tree }), `${DirectoryPrefix}${Tree.path}/`, Branch))
     }
   }
   return ChangedFiles
+}
+
+export async function Parse(CommitData:CommitData[], Branch:string) {
+  return (await Inspect(CommitData, '', Branch)).filter(Commit => Commit.mode === 'blob').map(Commit => Commit.path)
 }

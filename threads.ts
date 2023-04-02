@@ -48,7 +48,7 @@ Threads.parentPort.on('message', async (Message: string) => {
   since: CommitTime.toISO()}).then(async (ListCommits) => {
     for (const Commit of ListCommits.data) {
       await Octokit.rest.git.getTree({ owner: RepoOwner, repo: RepoName, tree_sha: Commit.commit.tree.sha }).then(async (CommitData) => {
-        ChangedFiles = ChangedFiles.concat((await CommitParse.Parse(CommitData.data.tree, null, Message)).filter((CommitChangedFile) => {
+        ChangedFiles = ChangedFiles.concat((await CommitParse.Parse(CommitData.data.tree, Message)).filter((CommitChangedFile) => {
           return !(ChangedFiles.some((ChangedFile) => { return ChangedFile === CommitChangedFile })) || !ChangedFiles.length
         }))
       })
