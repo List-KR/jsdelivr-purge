@@ -22,7 +22,7 @@ export async function Parse(CommitData:CommitData[], DirectoryPrefix:string, Bra
     if (Tree.type === 'blob') ChangedFiles.push(`${DirectoryPrefix ?? ''}${Tree.path}`)
     if (Tree.type === 'tree') {
       ChangedFiles = ChangedFiles.concat(await Parse(await Octokit.rest.git.getTree(
-        { owner: RepoOwner, repo: RepoOwner, tree_sha: Tree.sha }).then((Data) => { return Data.data.tree }), `${DirectoryPrefix ?? ''}${Tree.path}/`, Branch))
+        { owner: RepoOwner, repo: RepoName, tree_sha: Tree.sha }).then((Data) => { return Data.data.tree }), `${DirectoryPrefix ?? ''}${Tree.path}/`, Branch))
     }
   }
   return ChangedFiles
