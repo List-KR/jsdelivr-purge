@@ -4,7 +4,6 @@ import * as GitHub from '@octokit/rest'
 import * as Threads from 'worker_threads'
 import * as Dotenv from 'dotenv'
 import { DateTime } from 'luxon'
-import * as CommitParse from './commit-parse.js'
 
 Dotenv.config()
 
@@ -16,6 +15,7 @@ Threads.parentPort.on('message', async (Message: string) => {
   const [RepoOwner, RepoName] = process.env['GITHUB_REPO'].split('/')
   var ChangedFiles:string[] = []
   let LatestWorkflowRunTime:number = Number.MIN_SAFE_INTEGER
+  let LatestCommitTimeAddr:number = 0
   
   // Check GitHub workflow history to calcuate duration of commits.
   await Octokit.rest.actions.listWorkflowRuns({
@@ -43,17 +43,16 @@ Threads.parentPort.on('message', async (Message: string) => {
   })
 
   // Get a list of changed files during the duration.
-  await Octokit.rest.repos.listCommits({
-  owner: RepoOwner, repo: RepoName, per_page: Number.MAX_SAFE_INTEGER,
-  since: CommitTime.toISO()}).then(async (ListCommits) => {
-    for (const Commit of ListCommits.data) {
-      await Octokit.rest.git.getTree({ owner: RepoOwner, repo: RepoName, tree_sha: Commit.commit.tree.sha }).then(async (CommitData) => {
-        ChangedFiles = ChangedFiles.concat((await CommitParse.Parse(CommitData.data.tree, Message)).filter((CommitChangedFile) => {
-          return !(ChangedFiles.some((ChangedFile) => { return ChangedFile === CommitChangedFile })) || !ChangedFiles.length
-        }))
-      })
-    }
-  })
+  await Octokit.rest.repos.listCommits({ owner: RepoOwner, repo: RepoName, since: CommitTime.minus({hours: 24}).toISO(), until: CommitTime.toISO(), per_page: Number.MAX_SAFE_INTEGER })
+    .then(async (ListCommitsData) => {
+      for (let i = 0; i < ListCommitsData.data.length; i++) {
+        if (DateTime.fromISO(ListCommitsData.data[i].commit.author.date).toMillis() > DateTime.fromISO(ListCommitsData.data[LatestCommitTimeAddr].commit.author.date).toMillis()) {
+          LatestCommitTimeAddr = i
+        }
+      }
+      await Octokit.rest.repos.compareCommits({ owner: RepoOwner, repo: RepoName, head: `${RepoOwner}:${Message}`, base: `${RepoOwner}:${ListCommitsData.data[LatestCommitTimeAddr].sha}` })
+      .then(CompareData => ChangedFiles = CompareData.data.files.map(Files => Files.filename))
+    })
   
   if (!ChangedFiles.length) {
     Actions.info(`Thread for ${Message}: No files changes found. Exiting...`)
