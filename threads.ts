@@ -23,8 +23,8 @@ Threads.parentPort.on('message', async (Message: string) => {
   per_page: Number.MAX_SAFE_INTEGER }).then(async (ListWorkflowRuns) => {
     for (const Run of ListWorkflowRuns.data.workflow_runs) {
       if (Run.status === 'completed' && Run.conclusion === 'success' &&
-      DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ss'Z'").toMillis() > LatestWorkflowRunTime) {
-        LatestWorkflowRunTime = DateTime.fromFormat(Run.updated_at, "yyyy-MM-dd'T'HH:mm:ss'Z'").toMillis()
+      DateTime.fromISO(Run.updated_at).toMillis() > LatestWorkflowRunTime) {
+        LatestWorkflowRunTime = DateTime.fromISO(Run.updated_at).toMillis()
       }
     }
   })
