@@ -50,8 +50,10 @@ Threads.parentPort.on('message', async (Message: string) => {
           OldestCommitTimeAddr = i
         }
       }
-      await Octokit.rest.repos.compareCommits({ owner: RepoOwner, repo: RepoName, head: `${RepoOwner}:${Message}`, base: `${RepoOwner}:${ListCommitsData.data[OldestCommitTimeAddr].sha}` })
-      .then(CompareData => ChangedFiles = CompareData.data.files.map(Files => Files.filename))
+      if (ListCommitsData.data.length !== 0) {
+        await Octokit.rest.repos.compareCommits({ owner: RepoOwner, repo: RepoName, head: `${RepoOwner}:${Message}`, base: `${RepoOwner}:${ListCommitsData.data[OldestCommitTimeAddr].sha}` })
+        .then(CompareData => ChangedFiles = CompareData.data.files.map(Files => Files.filename))
+      }
     })
   
   if (!ChangedFiles.length) {
