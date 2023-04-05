@@ -43,7 +43,7 @@ Threads.parentPort.on('message', async (Message: string) => {
   })
 
   // Get a list of changed files during the duration.
-  await Octokit.rest.repos.listCommits({ owner: RepoOwner, repo: RepoName, since: CommitTime.minus({hours: DateTimeDelay.hour, minutes: DateTimeDelay.minute, seconds: DateTimeDelay.second}).toISO(), until: CommitTime.toISO(), per_page: Number.MAX_SAFE_INTEGER })
+  await Octokit.rest.repos.listCommits({ owner: RepoOwner, repo: RepoName, since: CommitTime.toISO(), per_page: Number.MAX_SAFE_INTEGER })
     .then(async (ListCommitsData) => {
       for (let i = 0; i < ListCommitsData.data.length; i++) {
         if (DateTime.fromISO(ListCommitsData.data[i].commit.author.date).toMillis() < DateTime.fromISO(ListCommitsData.data[OldestCommitTimeAddr].commit.author.date).toMillis()) {
