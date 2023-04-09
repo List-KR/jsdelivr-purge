@@ -15,7 +15,7 @@ Threads.parentPort.on('message', async (Message: string) => {
   const [RepoOwner, RepoName] = process.env['GITHUB_REPO'].split('/')
   var ChangedFiles:string[] = []
   let LatestWorkflowRunTime:number = Number.MIN_SAFE_INTEGER
-  let OldestCommitTimeAddr:number = 0
+  let MatchedCommitTimeAddr:number = 0
   
   // Check GitHub workflow history to calcuate duration of commits.
   await Octokit.rest.actions.listWorkflowRuns({
@@ -43,15 +43,16 @@ Threads.parentPort.on('message', async (Message: string) => {
   })
 
   // Get a list of changed files during the duration.
-  await Octokit.rest.repos.listCommits({ owner: RepoOwner, repo: RepoName, since: CommitTime.toISO(), per_page: Number.MAX_SAFE_INTEGER })
+  await Octokit.rest.repos.listCommits({ owner: RepoOwner, repo: RepoName, per_page: Number.MAX_SAFE_INTEGER })
     .then(async (ListCommitsData) => {
-      for (let i = 0; i < ListCommitsData.data.length; i++) {
-        if (DateTime.fromISO(ListCommitsData.data[i].commit.author.date).toMillis() < DateTime.fromISO(ListCommitsData.data[OldestCommitTimeAddr].commit.author.date).toMillis()) {
-          OldestCommitTimeAddr = i
-        }
-      }
       if (ListCommitsData.data.length !== 0) {
-        await Octokit.rest.repos.compareCommits({ owner: RepoOwner, repo: RepoName, head: `${RepoOwner}:${Message}`, base: `${RepoOwner}:${ListCommitsData.data[OldestCommitTimeAddr].sha}` })
+        for (let i = 0; i < ListCommitsData.data.length; i++) {
+          if (DateTime.fromISO(ListCommitsData.data[i].commit.author.date).toMillis() < CommitTime.toMillis()) {
+            MatchedCommitTimeAddr = i
+            break
+          }
+        }
+        await Octokit.rest.repos.compareCommits({ owner: RepoOwner, repo: RepoName, head: `${RepoOwner}:${Message}`, base: `${RepoOwner}:${ListCommitsData.data[MatchedCommitTimeAddr].sha}` })
         .then(CompareData => ChangedFiles = CompareData.data.files.map(Files => Files.filename))
       }
     })
