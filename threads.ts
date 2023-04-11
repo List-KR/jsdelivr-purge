@@ -87,14 +87,15 @@ Threads.parentPort.on('message', async (Message: string) => {
   for (const Changed of ChangedFiles) {
     const CDNResponses:Array<string> = []
     while(CDNResponses.length === 0 || !CDNResponses.some(async (CDNResponse) => {
-      const CDNStatus:JSON = await Got.got.get(`https://purge.jsdelivr.net/status/${CDNResponse}`).json()
+      const CDNStatus:JSON = await Got.got.get(`https://purge.jsdelivr.net/status/${CDNResponse}`, { https: { minVersion: 'TLSv1.3' } }).json()
       return CDNStatus['status'] === 'finished' || CDNStatus['status'] === 'failed'
     })) {
       const CDNRequest:JSON = await Got.got.post('https://purge.jsdelivr.net/', {
         headers: { 'cache-control': 'no-cache' },
         json: {
           'path': [`/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}`]
-        }}).json()
+        },
+        https: { minVersion: 'TLSv1.3' }}).json()
       Actions.info(`Thread for ${Message}: Sent new request having ${CDNRequest['id']} ID.`)
       CDNResponses.push(CDNRequest['id'])
     }
