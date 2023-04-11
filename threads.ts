@@ -113,7 +113,7 @@ Threads.parentPort.on('message', async (Message: string) => {
     let ErrorMessage: string = ''
     for (var i = 0; i < ChangedFiles.length; i++) {
       if (CurrentSHAObjects[i].SHA === PreviousSHAObjects[i].SHA) {
-        ErrorMessage += `${ChangedFiles[i]} | ${PreviousSHAObjects[i].SHA} | ${CurrentSHAObjects[i].SHA}`
+        ErrorMessage += `${ChangedFiles[i]} | ${PreviousSHAObjects[i].SHA} | ${CurrentSHAObjects[i].SHA}\n`
       }
     }
     Actions.setFailed(`ERROR! Some files did not purged:
