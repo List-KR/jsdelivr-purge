@@ -78,7 +78,7 @@ Threads.parentPort.on('message', async (Message: string) => {
   Actions.info(`Thread for ${Message}: Preparing to verify...`)
   for (const Changed of ChangedFiles) {
     let FileRAW = await Got.got.get(`https://cdn.jsdelivr.net/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}`, {
-      headers: { 'cache-control': 'no-store' }, https: { minVersion: 'TLSv1.3' }}).text().then(Data => Data)
+      headers: { 'cache-control': 'no-store' }, https: { minVersion: 'TLSv1.3' }, http2: true }).text().then(Data => Data)
     let FileSHA = CryptoJS.SHA384(FileRAW).toString()
     PreviousSHAObjects.push({ filename: Changed, SHA: FileSHA })
   }
@@ -87,7 +87,7 @@ Threads.parentPort.on('message', async (Message: string) => {
   for (const Changed of ChangedFiles) {
     const CDNResponses:Array<string> = []
     while(CDNResponses.length === 0 || !CDNResponses.some(async (CDNResponse) => {
-      const CDNStatus:JSON = await Got.got.get(`https://purge.jsdelivr.net/status/${CDNResponse}`, { https: { minVersion: 'TLSv1.3' } }).json()
+      const CDNStatus:JSON = await Got.got.get(`https://purge.jsdelivr.net/status/${CDNResponse}`, { https: { minVersion: 'TLSv1.3' }, http2: true }).json()
       return CDNStatus['status'] === 'finished' || CDNStatus['status'] === 'failed'
     })) {
       const CDNRequest:JSON = await Got.got.post('https://purge.jsdelivr.net/', {
@@ -95,7 +95,7 @@ Threads.parentPort.on('message', async (Message: string) => {
         json: {
           'path': [`/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}`]
         },
-        https: { minVersion: 'TLSv1.3' }}).json()
+        https: { minVersion: 'TLSv1.3' }, http2: true }).json()
       Actions.info(`Thread for ${Message}: Sent new request having ${CDNRequest['id']} ID.`)
       CDNResponses.push(CDNRequest['id'])
     }
@@ -105,7 +105,7 @@ Threads.parentPort.on('message', async (Message: string) => {
   Actions.info(`Thread for ${Message}: Verifying...`)
   for (const Changed of ChangedFiles) {
     let FileRAW = await Got.got.get(`https://cdn.jsdelivr.net/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}`, {
-      headers: { 'cache-control': 'no-store' }, https: { minVersion: 'TLSv1.3' }}).text().then(Data => Data)
+      headers: { 'cache-control': 'no-store' }, https: { minVersion: 'TLSv1.3' }, http2: true }).text().then(Data => Data)
     let FileSHA = CryptoJS.SHA384(FileRAW).toString()
     CurrentSHAObjects.push({ filename: Changed, SHA: FileSHA })
   }
