@@ -4,8 +4,14 @@ import * as GitHub from '@octokit/rest'
 import * as Threads from 'worker_threads'
 import * as Dotenv from 'dotenv'
 import { DateTime } from 'luxon'
+import * as CryptoJS from 'crypto-js'
 
 Dotenv.config()
+
+interface FileSHAObject {
+  filename: string
+  SHA: string
+}
 
 Threads.parentPort.on('message', async (Message: string) => {
   Actions.info(`Thread handling ${Message} started.`)
@@ -16,6 +22,8 @@ Threads.parentPort.on('message', async (Message: string) => {
   var ChangedFiles:string[] = []
   let LatestWorkflowRunTime:number = Number.MIN_SAFE_INTEGER
   let MatchedCommitTimeAddr:number = 0
+  var PreviousSHAObjects:FileSHAObject[] = []
+  var CurrentSHAObjects:FileSHAObject[] = []
   
   // Check GitHub workflow history to calcuate duration of commits.
   await Octokit.rest.actions.listWorkflowRuns({
@@ -67,6 +75,14 @@ Threads.parentPort.on('message', async (Message: string) => {
   ${ChangedFiles.join('\n  - ').replace(/^/, ' - ')}
   `)
   
+  Actions.info(`Thread for ${Message}: Preparing to verify...`)
+  for (const Changed of ChangedFiles) {
+    let FileRAW = await Got.got.get(`https://cdn.jsdelivr.net/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}`, {
+      headers: { 'cache-control': 'no-store' }, https: { minVersion: 'TLSv1.3' }}).text().then(Data => Data)
+    let FileSHA = CryptoJS.SHA384(FileRAW).toString()
+    PreviousSHAObjects.push({ filename: Changed, SHA: FileSHA })
+  }
+  
   // Make requests
   for (const Changed of ChangedFiles) {
     const CDNResponses:Array<string> = []
@@ -82,8 +98,28 @@ Threads.parentPort.on('message', async (Message: string) => {
       Actions.info(`Thread for ${Message}: Sent new request having ${CDNRequest['id']} ID.`)
       CDNResponses.push(CDNRequest['id'])
     }
-    Actions.info(`Thread for ${Message}: Purged ${Changed}.`)
+    Actions.info(`Thread for ${Message}: jsDelivr server returns that ${Changed} is purged.`)
   }
+
+  Actions.info(`Thread for ${Message}: Verifying...`)
+  for (const Changed of ChangedFiles) {
+    let FileRAW = await Got.got.get(`https://cdn.jsdelivr.net/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}`, {
+      headers: { 'cache-control': 'no-store' }, https: { minVersion: 'TLSv1.3' }}).text().then(Data => Data)
+    let FileSHA = CryptoJS.SHA384(FileRAW).toString()
+    CurrentSHAObjects.push({ filename: Changed, SHA: FileSHA })
+  }
+  if (CurrentSHAObjects.some((CurrentSHAObject, Index) => { return CurrentSHAObject.SHA === PreviousSHAObjects[Index].SHA })) {
+    let ErrorMessage: string = ''
+    for (var i = 0; i < ChangedFiles.length; i++) {
+      if (CurrentSHAObjects[i].SHA === PreviousSHAObjects[i].SHA) {
+        ErrorMessage += `${ChangedFiles[i]} | ${PreviousSHAObjects[i].SHA} | ${CurrentSHAObjects[i].SHA}`
+      }
+    }
+    Actions.setFailed(`ERROR! Some files did not purged:
+    Filename | Previous file hash | Current file hash
+    ${ErrorMessage}`)
+  }
+
   Actions.info(`Thread for ${Message}: All changed files are purged. Exiting...`)
   await new Promise(resolve => setTimeout(resolve, 1000))
   Threads.parentPort.close()
