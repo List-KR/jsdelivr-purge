@@ -21,7 +21,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Run jsDelivr-Purge
-              uses: List-KR/jsdelivr-purge@v3
+              uses: List-KR/jsdelivr-purge@v4
 ```
 
 > **Warning**: jsDelivr will add authentication data into a request header.
