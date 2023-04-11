@@ -4,7 +4,7 @@ import * as GitHub from '@octokit/rest'
 import * as Threads from 'worker_threads'
 import * as Dotenv from 'dotenv'
 import { DateTime } from 'luxon'
-import * as CryptoJS from 'crypto-js'
+import CryptoJS from 'crypto-js'
 
 Dotenv.config()
 
