@@ -119,6 +119,9 @@ Threads.parentPort.on('message', async (Message: string) => {
     Actions.setFailed(`ERROR! Some files did not purged:
     Filename | Previous file hash | Current file hash
     ${ErrorMessage}`)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    Threads.parentPort.close()
+    process.exit(0)
   }
 
   Actions.info(`Thread for ${Message}: All changed files are purged. Exiting...`)
