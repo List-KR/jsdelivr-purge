@@ -120,12 +120,10 @@ Threads.parentPort.on('message', async (Message: string) => {
     Filename | Previous file hash | Current file hash
     ${ErrorMessage}`)
     await new Promise(resolve => setTimeout(resolve, 1000))
-    Threads.parentPort.close()
     process.exit(1)
   }
 
   Actions.info(`Thread for ${Message}: All changed files are purged. Exiting...`)
   await new Promise(resolve => setTimeout(resolve, 1000))
-  Threads.parentPort.close()
   process.exit(0)
 })
