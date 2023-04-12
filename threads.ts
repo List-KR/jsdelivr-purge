@@ -67,7 +67,6 @@ Threads.parentPort.on('message', async (Message: string) => {
   
   if (!ChangedFiles.length) {
     Actions.info(`Thread for ${Message}: No files changes found. Exiting...`)
-    Threads.parentPort.close()
     process.exit(0)
   }
   

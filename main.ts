@@ -49,7 +49,7 @@ Branches.forEach((Branche, Index) => {
   BrancheThreads[Index].on('exit', (ExitCode) => {
     BrancheThreadsExitCode.push(ExitCode)
     BrancheThreads = BrancheThreads.filter((element) => element === BrancheThreads[Index])
-    if (!BrancheThreads.length && BrancheThreadsExitCode.every(code => code === 0)) process.exit(0)
-    if (!BrancheThreads.length && BrancheThreadsExitCode.some(code => code !== 0)) process.exit(1)
+    if (!(BrancheThreads.length) && BrancheThreadsExitCode.every(code => code === 0)) process.exit(0)
+    if (!(BrancheThreads.length) && BrancheThreadsExitCode.some(code => code !== 0)) process.exit(1)
   })
 })
