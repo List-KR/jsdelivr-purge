@@ -11,6 +11,7 @@ const KnownBranches = await Octokit.rest.repos.listBranches({ owner: RepoOwner, 
   .then(Result => Result.data.map(Data => Data.name))
 let Branches = process.env['INPUT_BRANCHES'].split(' ')
 let BrancheThreads:Threads.Worker[] = []
+let BrancheThreadsExitCode:Number[] = []
 
 // Check if an user selects all branches and selected branches are valid.
 if (Branches.length === 1 && Branches[0] === '**') {
@@ -45,8 +46,10 @@ ${Branches.join('\n  - ').replace(/^/, '  - ')}
 Branches.forEach((Branche, Index) => {
   BrancheThreads.push(new Threads.Worker('./threads.js'))
   BrancheThreads[Index].postMessage(Branche)
-  BrancheThreads[Index].on('exit', () => {
+  BrancheThreads[Index].on('exit', (ExitCode) => {
+    BrancheThreadsExitCode.push(ExitCode)
     BrancheThreads = BrancheThreads.filter((element) => element === BrancheThreads[Index])
-    if (!BrancheThreads.length) process.exit(0)
+    if (!BrancheThreads.length && BrancheThreadsExitCode.every(code => code === 0)) process.exit(0)
+    if (!BrancheThreads.length && BrancheThreadsExitCode.some(code => code !== 0)) process.exit(1)
   })
 })
