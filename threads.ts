@@ -109,15 +109,13 @@ Threads.parentPort.on('message', async (Message: string) => {
     CurrentSHAObjects.push({ filename: Changed, SHA: FileSHA })
   }
   if (CurrentSHAObjects.some((CurrentSHAObject, Index) => { return CurrentSHAObject.SHA === PreviousSHAObjects[Index].SHA })) {
-    let ErrorMessage: string = ''
+    let ErrorMessage: string = 'ERROR! Some files did not purged:\nFilename | file hash\n'
     for (var i = 0; i < ChangedFiles.length; i++) {
       if (CurrentSHAObjects[i].SHA === PreviousSHAObjects[i].SHA) {
-        ErrorMessage += `${ChangedFiles[i]} | ${PreviousSHAObjects[i].SHA} | ${CurrentSHAObjects[i].SHA}\n`
+        ErrorMessage += `${ChangedFiles[i]} | ${PreviousSHAObjects[i].SHA}\n`
       }
     }
-    Actions.setFailed(`ERROR! Some files did not purged:
-    Filename | Previous file hash | Current file hash
-    ${ErrorMessage}`)
+    Actions.setFailed(new Error(ErrorMessage))
     await new Promise(resolve => setTimeout(resolve, 1000))
     process.exit(1)
   }
