@@ -8,11 +8,6 @@ import CryptoJS from 'crypto-js'
 
 Dotenv.config()
 
-interface FileSHAObject {
-  filename: string
-  SHA: string
-}
-
 Threads.parentPort.on('message', async (Message: string) => {
   Actions.info(`Thread handling ${Message} started.`)
 
@@ -22,8 +17,6 @@ Threads.parentPort.on('message', async (Message: string) => {
   var ChangedFiles:string[] = []
   let LatestWorkflowRunTime:number = Number.MIN_SAFE_INTEGER
   let MatchedCommitTimeAddr:number = 0
-  var PreviousSHAObjects:FileSHAObject[] = []
-  var CurrentSHAObjects:FileSHAObject[] = []
   
   // Check GitHub workflow history to calcuate duration of commits.
   await Octokit.rest.actions.listWorkflowRuns({
@@ -74,21 +67,18 @@ Threads.parentPort.on('message', async (Message: string) => {
   ${ChangedFiles.join('\n  - ').replace(/^/, ' - ')}
   `)
   
-  Actions.info(`Thread for ${Message}: Preparing to verify...`)
-  for (const Changed of ChangedFiles) {
-    let FileRAW = await Got.got.get(`https://cdn.jsdelivr.net/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}`, {
-      headers: { 'cache-control': 'no-store' }, https: { minVersion: 'TLSv1.3' }, http2: true }).text().then(Data => Data)
-    let FileSHA = CryptoJS.SHA384(FileRAW).toString()
-    PreviousSHAObjects.push({ filename: Changed, SHA: FileSHA })
-  }
-  
   // Make requests
   for (const Changed of ChangedFiles) {
     const CDNResponses:Array<string> = []
-    while(CDNResponses.length === 0 || !CDNResponses.some(async (CDNResponse) => {
+    const GetFileSHA = async () => { return CryptoJS.SHA512(await Got.got.get(`https://cdn.jsdelivr.net/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}`, {
+      headers: { 'cache-control': 'no-store' }, https: { minVersion: 'TLSv1.3' }, http2: true }).text().then(Data => Data)).toString() }
+    let PreviousFileSHA:string = await GetFileSHA().then(Data => Data)
+    while(CDNResponses.length === 0 || (
+      !(CDNResponses.some(async (CDNResponse) => {
       const CDNStatus:JSON = await Got.got.get(`https://purge.jsdelivr.net/status/${CDNResponse}`, { https: { minVersion: 'TLSv1.3' }, http2: true }).json()
-      return CDNStatus['status'] === 'finished' || CDNStatus['status'] === 'failed'
-    })) {
+      return CDNStatus['status'] === 'finished' || CDNStatus['status'] === 'failed'})) &&
+      PreviousFileSHA === await GetFileSHA().then(Data => Data)
+    )) {
       const CDNRequest:JSON = await Got.got.post('https://purge.jsdelivr.net/', {
         headers: { 'cache-control': 'no-cache' },
         json: {
@@ -99,25 +89,6 @@ Threads.parentPort.on('message', async (Message: string) => {
       CDNResponses.push(CDNRequest['id'])
     }
     Actions.info(`Thread for ${Message}: jsDelivr server returns that ${Changed} is purged.`)
-  }
-
-  Actions.info(`Thread for ${Message}: Verifying...`)
-  for (const Changed of ChangedFiles) {
-    let FileRAW = await Got.got.get(`https://cdn.jsdelivr.net/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}`, {
-      headers: { 'cache-control': 'no-store' }, https: { minVersion: 'TLSv1.3' }, http2: true }).text().then(Data => Data)
-    let FileSHA = CryptoJS.SHA384(FileRAW).toString()
-    CurrentSHAObjects.push({ filename: Changed, SHA: FileSHA })
-  }
-  if (CurrentSHAObjects.some((CurrentSHAObject, Index) => { return CurrentSHAObject.SHA === PreviousSHAObjects[Index].SHA })) {
-    let ErrorMessage: string = 'ERROR! Some files did not purged:\nFilename | file hash\n'
-    for (var i = 0; i < ChangedFiles.length; i++) {
-      if (CurrentSHAObjects[i].SHA === PreviousSHAObjects[i].SHA) {
-        ErrorMessage += `${ChangedFiles[i]} | ${PreviousSHAObjects[i].SHA}\n`
-      }
-    }
-    Actions.setFailed(new Error(ErrorMessage))
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    process.exit(1)
   }
 
   Actions.info(`Thread for ${Message}: All changed files are purged. Exiting...`)
