@@ -87,6 +87,7 @@ Threads.parentPort.on('message', async (Message: string) => {
         https: { minVersion: 'TLSv1.3' }, http2: true }).json()
       Actions.info(`Thread for ${Message}: Sent new request having ${CDNRequest['id']} ID.`)
       CDNResponses.push(CDNRequest['id'])
+      await new Promise(resolve => setTimeout(resolve, 5000))
     }
     Actions.info(`Thread for ${Message}: jsDelivr server returns that ${Changed} is purged.`)
   }
