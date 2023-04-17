@@ -69,16 +69,10 @@ Threads.parentPort.on('message', async (Message: string) => {
   
   // Make requests
   for (const Changed of ChangedFiles) {
-    const CDNResponses:Array<string> = []
     const GetFileSHA = async () => { return CryptoJS.SHA512(await Got.got.get(`https://cdn.jsdelivr.net/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}`, {
       headers: { 'cache-control': 'no-store' }, https: { minVersion: 'TLSv1.3' }, http2: true }).text().then(Data => Data)).toString() }
     let PreviousFileSHA:string = await GetFileSHA().then(Data => Data)
-    while(CDNResponses.length === 0 || (
-      !(CDNResponses.some(async (CDNResponse) => {
-      const CDNStatus:JSON = await Got.got.get(`https://purge.jsdelivr.net/status/${CDNResponse}`, { https: { minVersion: 'TLSv1.3' }, http2: true }).json()
-      return CDNStatus['status'] === 'finished' || CDNStatus['status'] === 'failed'})) &&
-      PreviousFileSHA === await GetFileSHA().then(Data => Data)
-    )) {
+    while(PreviousFileSHA === await GetFileSHA().then(Data => Data)) {
       const CDNRequest:JSON = await Got.got.post('https://purge.jsdelivr.net/', {
         headers: { 'cache-control': 'no-cache' },
         json: {
@@ -86,7 +80,6 @@ Threads.parentPort.on('message', async (Message: string) => {
         },
         https: { minVersion: 'TLSv1.3' }, http2: true }).json()
       Actions.info(`Thread for ${Message}: Sent new request having ${CDNRequest['id']} ID.`)
-      CDNResponses.push(CDNRequest['id'])
       await new Promise(resolve => setTimeout(resolve, 5000))
     }
     Actions.info(`Thread for ${Message}: jsDelivr server returns that ${Changed} is purged.`)
