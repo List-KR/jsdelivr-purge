@@ -4,7 +4,6 @@ import * as GitHub from '@octokit/rest'
 import * as Threads from 'worker_threads'
 import * as Dotenv from 'dotenv'
 import { DateTime } from 'luxon'
-import CryptoJS from 'crypto-js'
 
 Dotenv.config()
 
@@ -70,15 +69,11 @@ Threads.parentPort.on('message', async (Message: string) => {
   // Make requests
   for (const Changed of ChangedFiles) {
     const CDNResponses:Array<string> = []
-    const GetFileSHA = async () => { return CryptoJS.SHA512(await Got.got.get(`https://cdn.jsdelivr.net/gh/${RepoOwner}/${RepoName}@${Message}/${Changed}`, {
-      headers: { 'cache-control': 'no-store' }, https: { minVersion: 'TLSv1.3' }, http2: true }).text().then(Data => Data)).toString() }
-    let PreviousFileSHA:string = await GetFileSHA().then(Data => Data)
-    while(CDNResponses.length === 0 || (
+    while(CDNResponses.length === 0 ||
       !(CDNResponses.some(async (CDNResponse) => {
       const CDNStatus:JSON = await Got.got.get(`https://purge.jsdelivr.net/status/${CDNResponse}`, { https: { minVersion: 'TLSv1.3' }, http2: true }).json()
-      return CDNStatus['status'] === 'finished' || CDNStatus['status'] === 'failed'})) &&
-      PreviousFileSHA === await GetFileSHA().then(Data => Data)
-    )) {
+      return CDNStatus['status'] === 'finished' || CDNStatus['status'] === 'failed'}))
+    ) {
       const CDNRequest:JSON = await Got.got.post('https://purge.jsdelivr.net/', {
         headers: { 'cache-control': 'no-cache' },
         json: {
