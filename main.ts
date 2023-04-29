@@ -16,9 +16,9 @@ let BrancheThreads:Threads.Worker[] = []
 if (Branches.length === 1 && Branches[0] === '**') {
   Branches = KnownBranches
 } else {
-  Branches.forEach((element) => {
-    if (KnownBranches.some(KnownBranche => KnownBranche !== element )) {
-      Branches = Branches.filter(Branch => Branch !== element )
+  KnownBranches.forEach((element) => {
+    if (Branches.some(KnownBranche => KnownBranche !== element )) {
+      Branches = Branches.filter(Branch => Branch === element )
       Actions.warning(`The ${element} branch does not exist.`)
     }
   })
