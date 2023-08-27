@@ -5,7 +5,7 @@
     "@octokit/rest": "^20.0.1",
     "@types/luxon": "^3.2.0",
     "dotenv": "^16.0.3",
-    "got": "^12.6.1",
+    "got": "^13.0.0",
     "luxon": "^3.3.0",
     "typescript": "^5.0.2"
   },
