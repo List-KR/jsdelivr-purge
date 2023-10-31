@@ -25,6 +25,7 @@
     "commander": "^11.1.0",
     "luxon": "^3.3.0",
     "needle": "^3.2.0",
+    "simple-git": "^3.20.0",
     "tsx": "^3.14.0",
     "typescript": "^5.0.2"
   },
