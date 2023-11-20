@@ -37,7 +37,6 @@ runs:
     - name: Clone repo into github.workspace
       uses: actions/checkout@v4
       if: ${{  steps.check_size.outputs.should_api != 'true' }}
-      working-directory: ${{ github.workspace }}
     - name: Run program
       env:
         GITHUB_TOKEN: ${{ github.token }}
