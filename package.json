@@ -17,17 +17,19 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "ci": "tsx index.ts"
+    "ci": "tsx index.ts",
+    "calc-repo-size": "tsx calc-repo-size/index.ts"
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
     "@octokit/rest": "^20.0.1",
     "@types/luxon": "^3.3.3",
-    "@types/needle": "^3.2.2",
     "@types/node": "^20.8.10",
+    "check-disk-space": "^3.4.0",
     "commander": "^11.1.0",
+    "got": "^12.6.1",
     "luxon": "^3.3.0",
-    "needle": "^3.2.0",
+    "p-queue": "^7.4.1",
     "simple-git": "^3.20.0",
     "tsx": "^3.14.0",
     "typescript": "^5.0.2"
