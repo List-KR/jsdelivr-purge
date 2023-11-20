@@ -33,7 +33,7 @@ export async function ListBranches(ProgramOptions: Types.ProgramOptionsType): Pr
 	}
 
 	if (!ProgramOptions.shouldUseApi) {
-		const GitInstance = CreateGitInstance(`${ProgramOptions.ciWorkspacePath}/${ProgramOptions.repo.split('/')[1]}`)
+		const GitInstance = CreateGitInstance(ProgramOptions.ciWorkspacePath)
 		Branches.push(await GitInstance.branchLocal().then(Branches => Branches.current))
 		// Branches[1] is always the current/default branch.
 		const OtherBranches = (await GitInstance.branchLocal().then(Branches => Branches.all)).filter(Branch => Branch !== Branches[1])

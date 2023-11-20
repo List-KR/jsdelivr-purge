@@ -44,7 +44,7 @@ export async function GetCommitSHAFromLatestWorkflowTime(ProgramOptions: Types.P
 	}
 
 	if (!ProgramOptions.shouldUseApi) {
-		const GitInstance = CreateGitInstance(`${ProgramOptions.ciWorkspacePath}/${ProgramOptions.repo.split('/')[1]}`)
+		const GitInstance = CreateGitInstance(ProgramOptions.ciWorkspacePath)
 		const GitLogRaw = (await GitInstance.log(['--date=iso-strict', `--since=${DateTime.fromMillis(LatestWorkflowRunTime).toISO()}`])).all
 		for (const CommitRaw of GitLogRaw) {
 			if (DateTime.fromISO(CommitRaw.date).toMillis() < LatestWorkflowRunTime) {
@@ -79,7 +79,7 @@ export async function GetChangedFilesFromSHAToHead(ProgramOptions: Types.Program
 	}
 
 	if (!ProgramOptions.shouldUseApi) {
-		const GitInstance = CreateGitInstance(`${ProgramOptions.ciWorkspacePath}/${ProgramOptions.repo.split('/')[1]}`)
+		const GitInstance = CreateGitInstance(ProgramOptions.ciWorkspacePath)
 		const ChangedFiles = (await GitInstance.diff(['--name-only', `${CommitSHA}...${Branch}`])).split('\n')
 		return ChangedFiles
 	}
