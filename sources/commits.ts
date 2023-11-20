@@ -40,7 +40,7 @@ export async function GetCommitSHAFromLatestWorkflowTime(ProgramOptions: Types.P
 			MatchedCommitTimeAddress++
 		}
 
-		return GitHubListCommitsRaw[MatchedCommitTimeAddress].sha
+		return GitHubListCommitsRaw[MatchedCommitTimeAddress - 1].sha
 	}
 
 	if (!ProgramOptions.shouldUseApi) {
@@ -54,7 +54,7 @@ export async function GetCommitSHAFromLatestWorkflowTime(ProgramOptions: Types.P
 			MatchedCommitTimeAddress++
 		}
 
-		return GitLogRaw[MatchedCommitTimeAddress].hash
+		return GitLogRaw[MatchedCommitTimeAddress - 1].hash
 	}
 }
 
