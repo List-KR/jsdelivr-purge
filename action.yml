@@ -29,9 +29,7 @@ runs:
         REPO: ${{ github.repository }}
         CI_WORKSPACE_PATH: ${{ github.workspace }}
       run: |
-        npm run calc-repo-size -- --gh-token "$GITHUB_TOKEN" \ 
-        --repo "$REPO" \ 
-        --ci-workspace-path "$CI_WORKSPACE_PATH"
+        npm run calc-repo-size -- --gh-token "$GITHUB_TOKEN" --repo "$REPO" --ci-workspace-path "$CI_WORKSPACE_PATH"
       shell: bash
       working-directory: ${{ github.action_path }}
     - name: Clone repo into github.workspace
@@ -47,10 +45,6 @@ runs:
         CI_ACTION_PATH: ${{ github.action_path }}
         SHOULD_USE_API: ${{ steps.check_size.outputs.should_use_api }}
       run: |
-        npm run ci -- --gh-token "$GITHUB_TOKEN" --repo "$REPO" \ 
-        --workflow-ref "$WORKFLOWREF" --branch "$BRANCHE" \ 
-        --ci-workspace-path "$CI_WORKSPACE_PATH" \ 
-        --ci-action-path "$CI_ACTION_PATH" \ 
-        --should-use-api "$SHOULD_USE_API"
+        npm run ci -- --gh-token "$GITHUB_TOKEN" --repo "$REPO" --workflow-ref "$WORKFLOWREF" --branch "$BRANCHE" --ci-workspace-path "$CI_WORKSPACE_PATH" --ci-action-path "$CI_ACTION_PATH" --should-use-api "$SHOULD_USE_API"
       shell: bash
       working-directory: ${{ github.action_path }}
