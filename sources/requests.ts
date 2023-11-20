@@ -51,6 +51,10 @@ export class PurgeRequestManager {
 	AddURLs(Filenames: string[], BranchOrTag: string) {
 		const SplittedFilenames = Utility.GroupStringsByNumber(Filenames.map(Filename => ({Filename, BranchOrTag})), 20) as Types.RemainingFilenamesArrayType[][]
 
+		if (IsDebug(this.ProgramOptions)) {
+			Actions.debug(`SplittedFilenames variable in requests.ts: ${JSON.stringify(SplittedFilenames)}`)
+		}
+
 		if (SplittedFilenames[SplittedFilenames.length - 1].length < 20) {
 			this.RemainingFilenames.push(...SplittedFilenames.pop())
 		}
