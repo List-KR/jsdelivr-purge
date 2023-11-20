@@ -11,7 +11,7 @@ import type {ProgramOptionsType} from './types'
 export async function GetLatestWorkflowTime(ProgramOptions: ProgramOptionsType): Promise<number> {
 	const GitHubInstance = new GitHub.Octokit({auth: ProgramOptions.ghToken})
 	const [RepoOwner, RepoName] = ProgramOptions.repo.split('/')
-	var LatestWorkflowRunTime = Number.MIN_SAFE_INTEGER
+	var LatestWorkflowRunTime = 0
 	const WorkflowRuns = await GitHubInstance.actions.listWorkflowRuns({
 		owner: RepoOwner, repo: RepoName,
 		workflow_id: /(?<=^[A-z0-9-_]+\/[A-z0-9-_]+\/\.github\/workflows\/).+\.yml(?=@refs\/)/.exec(ProgramOptions.workflowRef)[0],
