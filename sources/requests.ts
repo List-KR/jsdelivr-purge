@@ -53,6 +53,8 @@ export class PurgeRequestManager {
 
 		if (IsDebug(this.ProgramOptions)) {
 			Actions.debug(`SplittedFilenames variable in requests.ts: ${JSON.stringify(SplittedFilenames)}`)
+			Actions.debug(`Filenames variable in requests.ts: ${JSON.stringify(Filenames)}`)
+			Actions.debug(`BranchOrTag variable in requests.ts: ${BranchOrTag}`)
 		}
 
 		if (SplittedFilenames[SplittedFilenames.length - 1].length < 20) {
