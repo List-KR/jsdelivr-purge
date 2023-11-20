@@ -66,7 +66,7 @@ export async function GetCommitSHAFromLatestWorkflowTime(ProgramOptions: Types.P
  * @param {string} Branch The branch name.
  * @returns {Promise<string[]>} A list of changed files.
  */
-export async function GetChangedFilesFromSHAToHead(ProgramOptions: Types.ProgramOptionsType, CommitSHA: string, Branch: string): Promise<string[]> {
+export async function GetChangedFilesFromSHAToHead(ProgramOptions: Types.ProgramOptionsType, CommitSHA: string, Branch: string, DefaultBranch: string): Promise<string[]> {
 	if (ProgramOptions.shouldUseApi) {
 		const GitHubInstance = CreateGitHubInstance(ProgramOptions)
 		const GitHubComparingRaw = await GitHubInstance.repos.compareCommits({
@@ -80,7 +80,7 @@ export async function GetChangedFilesFromSHAToHead(ProgramOptions: Types.Program
 
 	if (!ProgramOptions.shouldUseApi) {
 		const GitInstance = CreateGitInstance(ProgramOptions.ciWorkspacePath)
-		const ChangedFiles = (await GitInstance.diff(['--name-only', `${CommitSHA}...${Branch}`])).split('\n')
-		return ChangedFiles
+		const ChangedFiles = (await GitInstance.diff(['--name-only', `${CommitSHA}...${Branch === 'latest' ? DefaultBranch : Branch}`])).split('\n')
+		return ChangedFiles[ChangedFiles.length - 1] === '' ? ChangedFiles.slice(0, ChangedFiles.length - 1) : ChangedFiles
 	}
 }
