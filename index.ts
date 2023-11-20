@@ -38,6 +38,10 @@ const PurgeRequest = new PurgeRequestManager(ProgramOptions)
 for (const Branch of Branches) {
 	// eslint-disable-next-line no-await-in-loop
 	const CommitSHA = await GetCommitSHAFromLatestWorkflowTime(ProgramOptions, LatestWorkflowRunTime, Branch).then(CommitSHA => CommitSHA)
+	if (CommitSHA === null) {
+		continue
+	}
+
 	// eslint-disable-next-line no-await-in-loop
 	const ChangedFiles = await GetChangedFilesFromSHAToHead(ProgramOptions, CommitSHA, Branch, Branches[1]).then(ChangedFiles => ChangedFiles)
 	PurgeRequest.AddURLs(ChangedFiles, Branch)
