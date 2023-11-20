@@ -14,7 +14,7 @@ export async function GetLatestWorkflowTime(ProgramOptions: ProgramOptionsType):
 	var LatestWorkflowRunTime = Number.MIN_SAFE_INTEGER
 	const WorkflowRuns = await GitHubInstance.actions.listWorkflowRuns({
 		owner: RepoOwner, repo: RepoName,
-		workflow_id: /(?<=^[A-z0-9]+\/[A-z0-9]+\/\.github\/workflows\/).+\.yml(?=@refs\/)/.exec(ProgramOptions.workflowRef)[0],
+		workflow_id: /(?<=^[A-z0-9-_]+\/[A-z0-9-_]+\/\.github\/workflows\/).+\.yml(?=@refs\/)/.exec(ProgramOptions.workflowRef)[0],
 	}).then(WorkflowRuns => WorkflowRuns.data.workflow_runs)
 	for (const WorkflowRun of WorkflowRuns) {
 		if (WorkflowRun.status === 'completed' && WorkflowRun.conclusion === 'success'
