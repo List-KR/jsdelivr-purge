@@ -6,42 +6,48 @@ inputs:
   branches:
     description: 'The your branches that you want to purge cache existing in jsDelivr'
     required: false
-    default: 'master main'
-
-  delay:
-    description: 'A time that delay between GitHub RAW file service and actual git operation'
-    required: false
-    default: '2:0:0'
+    default: 'latest'
 
 runs:
   using: 'composite'
   steps:
     - name: Set up NodeJS LTS
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: 'lts/*'
     - name: Install npm packages
       run: |
-        sudo npm i -g npm
-        sudo npm i -g typescript
+        sudo npm update -g npm
+        sudo npm update -g typescript
         npm i
       shell: bash
       working-directory: ${{ github.action_path }}
-    - name: Compile Typescript
-      run: tsc
-      shell: bash
-      working-directory: ${{ github.action_path }}
-    - name: Create env file
+    - name: Check if size of the repo exceeds the runner's hardware capacity
+      id: check_size
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        CI_WORKSPACE_PATH: ${{ github.workspace }}
       run: |
-        touch .env
-        echo GITHUB_REPO=${{ github.repository }} >> .env
-        echo GITHUB_TOKEN=${{ github.token }} >> .env
-        echo GITHUB_WORKFLOW_REF=${{ github.workflow_ref }} >> .env
-        echo INPUT_BRANCHES=${{ inputs.branches }} >> .env
-        echo INPUT_DELAY=${{ inputs.delay }} >> .env
+        npm run calc-repo-size -- --gh-token "$GITHUB_TOKEN" --repo "$REPO" --ci-workspace-path "$CI_WORKSPACE_PATH"
       shell: bash
       working-directory: ${{ github.action_path }}
-    - name: Run compiled scripts
-      run: node main.js
+    - name: Clone repo into github.workspace
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: ${{ github.event.repository.default_branch }}
+      if: ${{  steps.check_size.outputs.should_api != 'true' }}
+    - name: Run program
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        BRANCHE: ${{ inputs.branches }}
+        WORKFLOWREF: ${{ github.workflow_ref }}
+        CI_WORKSPACE_PATH: ${{ github.workspace }}
+        CI_ACTION_PATH: ${{ github.action_path }}
+        SHOULD_USE_API: ${{ steps.check_size.outputs.should_use_api }}
+      run: |
+        npm run ci -- --gh-token "$GITHUB_TOKEN" --repo "$REPO" --workflow-ref "$WORKFLOWREF" --branch "$BRANCHE" --ci-workspace-path "$CI_WORKSPACE_PATH" --ci-action-path "$CI_ACTION_PATH" --should-use-api "$SHOULD_USE_API"
       shell: bash
       working-directory: ${{ github.action_path }}
