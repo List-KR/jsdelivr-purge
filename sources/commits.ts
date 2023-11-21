@@ -26,13 +26,18 @@ export async function GetCommitSHAFromLatestWorkflowTime(ProgramOptions: Types.P
 	var MatchedCommitTimeAddress = 0
 	if (ProgramOptions.shouldUseApi) {
 		const GitHubInstance = CreateGitHubInstance(ProgramOptions)
-		const GitHubListCommitsRaw = await GitHubInstance.repos.listCommits({
+		const GitHubListFilteredCommits = await GitHubInstance.repos.listCommits({
 			owner: ProgramOptions.repo.split('/')[0],
 			repo: ProgramOptions.repo.split('/')[1],
 			sha: Branch,
 			since: DateTime.fromMillis(LatestWorkflowRunTime).toISO(),
 		}).then(Response => Response.data)
-		for (const CommitRaw of GitHubListCommitsRaw) {
+		const GitHubListCommits = await GitHubInstance.repos.listCommits({
+			owner: ProgramOptions.repo.split('/')[0],
+			repo: ProgramOptions.repo.split('/')[1],
+			sha: Branch,
+		}).then(Response => Response.data)
+		for (const CommitRaw of GitHubListFilteredCommits) {
 			if (DateTime.fromISO(CommitRaw.commit.author.date).toMillis() < LatestWorkflowRunTime) {
 				break
 			}
@@ -40,17 +45,24 @@ export async function GetCommitSHAFromLatestWorkflowTime(ProgramOptions: Types.P
 			MatchedCommitTimeAddress++
 		}
 
-		if (GitHubListCommitsRaw.length === 0) {
+		// If any commit is pushed after the latest workflow time, skip the branch.
+		if (GitHubListFilteredCommits.length === 0) {
 			return null
 		}
 
-		return GitHubListCommitsRaw[MatchedCommitTimeAddress - 1].sha
+		// If the wokflow had not executed before, return SHA of the oldest commit.
+		if (GitHubListFilteredCommits.length === GitHubListCommits.length && LatestWorkflowRunTime === 0) {
+			return GitHubListCommits[GitHubListFilteredCommits.length - 1].sha
+		}
+
+		return GitHubListCommits[MatchedCommitTimeAddress].sha
 	}
 
 	if (!ProgramOptions.shouldUseApi) {
 		const GitInstance = CreateGitInstance(ProgramOptions.ciWorkspacePath)
-		const GitLogRaw = (await GitInstance.log(['--date=iso-strict', `--since=${DateTime.fromMillis(LatestWorkflowRunTime).toISO()}`])).all
-		for (const CommitRaw of GitLogRaw) {
+		const GitLogFiltered = (await GitInstance.log(['--date=iso-strict', `--since=${DateTime.fromMillis(LatestWorkflowRunTime).toISO()}`])).all
+		const GitLog = (await GitInstance.log(['--date=iso-strict'])).all
+		for (const CommitRaw of GitLogFiltered) {
 			if (DateTime.fromISO(CommitRaw.date).toMillis() < LatestWorkflowRunTime) {
 				break
 			}
@@ -58,11 +70,17 @@ export async function GetCommitSHAFromLatestWorkflowTime(ProgramOptions: Types.P
 			MatchedCommitTimeAddress++
 		}
 
-		if (GitLogRaw.length === 0) {
+		// If any commit is pushed after the latest workflow time, skip the branch.
+		if (GitLogFiltered.length === 0) {
 			return null
 		}
 
-		return GitLogRaw[MatchedCommitTimeAddress - 1].hash
+		// If the wokflow had not ex>ecuted before, return SHA of the oldest commit.
+		if (GitLogFiltered.length === GitLog.length && LatestWorkflowRunTime === 0) {
+			return GitLog[GitLogFiltered.length - 1].hash
+		}
+
+		return GitLog[MatchedCommitTimeAddress].hash
 	}
 }
 
