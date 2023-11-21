@@ -7,11 +7,6 @@ If you want to purge jsDelivr cache automatically, please customize the followin
 ```
 name: 'Run jsDelivr-Purge'
 
-on:
-  schedule:
-    - cron: '* 0/1 * * *'
-  workflow_dispatch:
-
 permissions:
     actions: read
     contents: read
@@ -21,8 +16,12 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Run jsDelivr-Purge
-              uses: List-KR/jsdelivr-purge@v4
+              uses: List-KR/jsdelivr-purge@5.0.0
 ```
+
+The jsDelivr-Purge supports `workflow_dispatch`, `schedule` and `push` event.
+
+It always purges `latest` and the default branch of your repo.
 
 > **Warning**: jsDelivr will add authentication data into a request header.
 You need to pay attention to this change!
