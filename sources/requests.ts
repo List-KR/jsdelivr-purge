@@ -43,7 +43,7 @@ async function PostPurgeRequest(ProgramOptions: Types.ProgramOptionsType, Branch
 }
 
 export class PurgeRequestManager {
-	private readonly SharedPQueue = new PQueue({autoStart: false, concurrency: Os.cpus().length})
+	private readonly SharedPQueue = new PQueue({autoStart: true, concurrency: Os.cpus().length})
 	private readonly RemainingFilenames: Types.RemainingFilenamesArrayType[] = []
 
 	constructor(private readonly ProgramOptions: Types.ProgramOptionsType) {}
