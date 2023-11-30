@@ -1,5 +1,5 @@
 import * as Actions from '@actions/core'
-import type * as Types from './types'
+import type * as Types from './types.js'
 
 export function IsDebug(Args: Types.ProgramOptionsType | Types.ProgramOptionsRawType) {
 	const ArgsDebug = typeof Args.debug === 'string' ? Args.debug === 'true' : Args.debug

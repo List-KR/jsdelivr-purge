@@ -1,16 +1,15 @@
 {
   "compilerOptions": {
     "outDir": "dist",
-    "module": "ES2022",
+    "module": "NodeNext",
     "target": "ES2022",
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "removeComments": true,
     "alwaysStrict": true,
     "skipLibCheck": true
   },
   "include": [
     "index.ts",
-    "calc-repo-size/**/*.ts",
     "sources/**/*.ts"
   ]
 }

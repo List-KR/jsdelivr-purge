@@ -1,13 +1,13 @@
-import * as Got from 'got'
+import got from 'got'
 import * as Actions from '@actions/core'
 import * as Os from 'node:os'
 import PQueue from 'p-queue'
-import {IsDebug} from './debug'
-import * as Utility from './utility'
-import type * as Types from './types'
+import {IsDebug} from './debug.js'
+import * as Utility from './utility.js'
+import type * as Types from './types.js'
 
 async function GetCDNResponse(ProgramOptions: Types.ProgramOptionsType, ID: string): Promise<Types.CDNStatusResponseType> {
-	const ResponseRaw: Types.CDNStatusResponseType = await Got.got(`https://purge.jsdelivr.net/status/${ID}`, {
+	const ResponseRaw: Types.CDNStatusResponseType = await got(`https://purge.jsdelivr.net/status/${ID}`, {
 		https: {
 			minVersion: 'TLSv1.3',
 			ciphers: 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256',
@@ -22,7 +22,7 @@ async function GetCDNResponse(ProgramOptions: Types.ProgramOptionsType, ID: stri
 }
 
 async function PostPurgeRequest(ProgramOptions: Types.ProgramOptionsType, BranchOrTag: string[], Filenames: string[]): Promise<Types.CDNPostResponseType> {
-	const ResponseRaw: Types.CDNPostResponseType = await Got.got.post('https://purge.jsdelivr.net/', {
+	const ResponseRaw: Types.CDNPostResponseType = await got.post('https://purge.jsdelivr.net/', {
 		headers: {
 			'cache-control': 'no-cache',
 		},

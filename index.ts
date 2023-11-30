@@ -1,11 +1,11 @@
 import * as Commander from 'commander'
-import type * as Types from './sources/types'
-import {ExportArgs, IsDebug} from './sources/debug'
-import {ReplaceStringWithBooleanInObject} from './sources/utility'
-import {GetLatestWorkflowTime} from './sources/actions'
-import {ListBranches} from './sources/branches'
-import {GetChangedFilesFromSHAToHead, GetCommitSHAFromLatestWorkflowTime} from './sources/commits'
-import {PurgeRequestManager} from './sources/requests'
+import type * as Types from './sources/types.js'
+import {ExportArgs, IsDebug} from './sources/debug.js'
+import {ReplaceStringWithBooleanInObject} from './sources/utility.js'
+import {GetLatestWorkflowTime} from './sources/actions.js'
+import {ListBranches} from './sources/branches.js'
+import {GetChangedFilesFromSHAToHead, GetCommitSHAFromLatestWorkflowTime} from './sources/commits.js'
+import {PurgeRequestManager} from './sources/requests.js'
 
 const Program = new Commander.Command()
 

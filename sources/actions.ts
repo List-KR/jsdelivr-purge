@@ -1,6 +1,6 @@
 import * as GitHub from '@octokit/rest'
 import {DateTime} from 'luxon'
-import type {ProgramOptionsType} from './types'
+import type {ProgramOptionsType} from './types.js'
 
 /**
  * @name GetLatestWorkflowTime
