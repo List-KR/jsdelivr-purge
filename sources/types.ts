@@ -47,3 +47,8 @@ export type RemainingFilenamesArrayType = {
 	Filename: string;
 	BranchOrTag: string;
 }
+
+export type CommitSHA = {
+	sha: string;
+	length: number;
+}

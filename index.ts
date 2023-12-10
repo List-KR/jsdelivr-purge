@@ -4,7 +4,7 @@ import {ExportArgs, IsDebug} from './sources/debug.js'
 import {ReplaceStringWithBooleanInObject} from './sources/utility.js'
 import {GetLatestWorkflowTime} from './sources/actions.js'
 import {ListBranches} from './sources/branches.js'
-import {GetChangedFilesFromSHAToHead, GetCommitSHAFromLatestWorkflowTime} from './sources/commits.js'
+import {GetChangedFilesFromACommit, GetChangedFilesFromSHAToHead, GetCommitSHAFromLatestWorkflowTime} from './sources/commits.js'
 import {PurgeRequestManager} from './sources/requests.js'
 
 const Program = new Commander.Command()
@@ -38,12 +38,19 @@ const PurgeRequest = new PurgeRequestManager(ProgramOptions)
 for (const Branch of Branches) {
 	// eslint-disable-next-line no-await-in-loop
 	const CommitSHA = await GetCommitSHAFromLatestWorkflowTime(ProgramOptions, LatestWorkflowRunTime, Branch).then(CommitSHA => CommitSHA)
-	if (CommitSHA === null) {
+	var ChangedFiles: string[] = []
+	if (CommitSHA.length === 0) {
 		continue
 	}
 
+	if (CommitSHA.length === 1) {
+		// eslint-disable-next-line no-await-in-loop
+		ChangedFiles = await GetChangedFilesFromACommit(ProgramOptions, CommitSHA.sha, Branch, Branches[1]).then(ChangedFiles => ChangedFiles)
+	} else {
 	// eslint-disable-next-line no-await-in-loop
-	const ChangedFiles = await GetChangedFilesFromSHAToHead(ProgramOptions, CommitSHA, Branch, Branches[1]).then(ChangedFiles => ChangedFiles)
+		ChangedFiles = await GetChangedFilesFromSHAToHead(ProgramOptions, CommitSHA.sha, Branch, Branches[1]).then(ChangedFiles => ChangedFiles)
+	}
+
 	PurgeRequest.AddURLs(ChangedFiles, Branch)
 }
 
