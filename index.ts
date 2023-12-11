@@ -4,7 +4,7 @@ import {ExportArgs, IsDebug} from './sources/debug.js'
 import {ReplaceStringWithBooleanInObject} from './sources/utility.js'
 import {GetLatestWorkflowTime} from './sources/actions.js'
 import {ListBranches} from './sources/branches.js'
-import {GetChangedFilesFromACommit, GetChangedFilesFromSHAToHead, GetCommitSHAFromLatestWorkflowTime} from './sources/commits.js'
+import {CommitManager} from './sources/commits.js'
 import {PurgeRequestManager} from './sources/requests.js'
 
 const Program = new Commander.Command()
@@ -36,8 +36,9 @@ const LatestWorkflowRunTime = await GetLatestWorkflowTime(ProgramOptions).then(L
 const Branches = await ListBranches(ProgramOptions).then(Branches => Branches)
 const PurgeRequest = new PurgeRequestManager(ProgramOptions)
 for (const Branch of Branches) {
+	const CommitManagerInstance = new CommitManager(ProgramOptions, Branches)
 	// eslint-disable-next-line no-await-in-loop
-	const CommitSHA = await GetCommitSHAFromLatestWorkflowTime(ProgramOptions, LatestWorkflowRunTime, Branch, Branches[1]).then(CommitSHA => CommitSHA)
+	const CommitSHA = await CommitManagerInstance.GetCommitSHAFromLatestWorkflowTime(LatestWorkflowRunTime, Branch).then(CommitSHA => CommitSHA)
 	var ChangedFiles: string[] = []
 	if (CommitSHA.length === 0) {
 		continue
@@ -45,10 +46,10 @@ for (const Branch of Branches) {
 
 	if (CommitSHA.length === 1) {
 		// eslint-disable-next-line no-await-in-loop
-		ChangedFiles = await GetChangedFilesFromACommit(ProgramOptions, CommitSHA.sha, Branch, Branches[1]).then(ChangedFiles => ChangedFiles)
+		ChangedFiles = await CommitManagerInstance.GetChangedFilesFromACommit(CommitSHA.sha).then(ChangedFiles => ChangedFiles)
 	} else {
 	// eslint-disable-next-line no-await-in-loop
-		ChangedFiles = await GetChangedFilesFromSHAToHead(ProgramOptions, CommitSHA.sha, Branch, Branches[1]).then(ChangedFiles => ChangedFiles)
+		ChangedFiles = await CommitManagerInstance.GetChangedFilesFromSHAToHead(CommitSHA.sha, Branch).then(ChangedFiles => ChangedFiles)
 	}
 
 	PurgeRequest.AddURLs(ChangedFiles, Branch)
