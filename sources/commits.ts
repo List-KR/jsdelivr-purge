@@ -22,14 +22,14 @@ function CreateGitInstance(BasePath: string): Git.SimpleGit {
  * @param {string} Branch The branch or tag name.
  * @returns {Promise<Types.CommitSHA>} SHA of the latest commit.
  */
-export async function GetCommitSHAFromLatestWorkflowTime(ProgramOptions: Types.ProgramOptionsType, LatestWorkflowRunTime: number, Branch: string): Promise<Types.CommitSHA> {
+export async function GetCommitSHAFromLatestWorkflowTime(ProgramOptions: Types.ProgramOptionsType, LatestWorkflowRunTime: number, Branch: string, DefaultBranch: string): Promise<Types.CommitSHA> {
 	var MatchedCommitTimeAddress = 0
 	if (ProgramOptions.shouldUseApi) {
 		const GitHubInstance = CreateGitHubInstance(ProgramOptions)
 		const GitHubListCommits = await GitHubInstance.repos.listCommits({
 			owner: ProgramOptions.repo.split('/')[0],
 			repo: ProgramOptions.repo.split('/')[1],
-			sha: Branch,
+			sha: Branch === 'latest' ? DefaultBranch : Branch,
 		}).then(Response => Response.data)
 		for (const CommitRaw of GitHubListCommits) {
 			if (DateTime.fromISO(CommitRaw.commit.author.date).toMillis() < LatestWorkflowRunTime) {
@@ -91,7 +91,7 @@ export async function GetChangedFilesFromSHAToHead(ProgramOptions: Types.Program
 		const GitHubComparingRaw = await GitHubInstance.repos.compareCommits({
 			owner: ProgramOptions.repo.split('/')[0],
 			repo: ProgramOptions.repo.split('/')[1],
-			head: Branch,
+			head: Branch === 'latest' ? DefaultBranch : Branch,
 			base: CommitSHA,
 		}).then(Response => Response.data)
 		return GitHubComparingRaw.files.map(File => File.filename)

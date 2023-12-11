@@ -37,7 +37,7 @@ const Branches = await ListBranches(ProgramOptions).then(Branches => Branches)
 const PurgeRequest = new PurgeRequestManager(ProgramOptions)
 for (const Branch of Branches) {
 	// eslint-disable-next-line no-await-in-loop
-	const CommitSHA = await GetCommitSHAFromLatestWorkflowTime(ProgramOptions, LatestWorkflowRunTime, Branch).then(CommitSHA => CommitSHA)
+	const CommitSHA = await GetCommitSHAFromLatestWorkflowTime(ProgramOptions, LatestWorkflowRunTime, Branch, Branches[1]).then(CommitSHA => CommitSHA)
 	var ChangedFiles: string[] = []
 	if (CommitSHA.length === 0) {
 		continue

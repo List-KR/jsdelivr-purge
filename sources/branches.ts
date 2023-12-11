@@ -44,5 +44,5 @@ export async function ListBranches(ProgramOptions: Types.ProgramOptionsType): Pr
 		Actions.debug(`ListBranches in branches.ts called: ${JSON.stringify(Branches)}`)
 	}
 
-	return Branches
+	return Branches.filter(Branch => Branch !== undefined && Branch !== null)
 }
