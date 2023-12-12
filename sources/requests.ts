@@ -49,7 +49,7 @@ export class PurgeRequestManager {
 	constructor(private readonly ProgramOptions: Types.ProgramOptionsType) {}
 
 	AddURLs(Filenames: string[], BranchOrTag: string) {
-		const SplittedFilenames = Utility.GroupStringsByNumber(Filenames.map(Filename => ({Filename, BranchOrTag})), 20) as Types.RemainingFilenamesArrayType[][]
+		const SplittedFilenames = Utility.GroupRequestsByNumberWithBranch(Filenames.map(Filename => ({Filename, BranchOrTag})), 20)
 
 		if (IsDebug(this.ProgramOptions)) {
 			Actions.debug(`SplittedFilenames variable in requests.ts: ${JSON.stringify(SplittedFilenames)}`)
@@ -91,7 +91,7 @@ export class PurgeRequestManager {
 	}
 
 	Start(): void {
-		const RemainingFilenamesGroup = Utility.GroupStringsByNumber(this.RemainingFilenames, 20) as Types.RemainingFilenamesArrayType[][]
+		const RemainingFilenamesGroup = Utility.GroupRequestsByNumberWithBranch(this.RemainingFilenames, 20)
 		for (const RemainingFilenames of RemainingFilenamesGroup) {
 			void this.SharedPQueue.add(async () => {
 				const CDNRequestArary: Types.CDNPostResponseType[] = []
