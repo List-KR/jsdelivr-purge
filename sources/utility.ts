@@ -49,7 +49,10 @@ function GroupObjectByNumber(StringOrObject: unknown[], GroupSize: number): unkn
 
 /**
  * @name GroupStringsByNumber
- * @description Groups a RemainingFilenamesArray into subarrays based on a specified group size.
+ * @description Groups a RemainingFilenamesArray into subarrays based on a specified group size. A group with latest tag will be separated from others.
+ * @param	{Types.RemainingFilenamesArrayType[]} RemainingObjectArray A RemainingFilenamesArray to group.
+ * @param	{number} GroupSize The maximum number of elements in each subarray.
+ * @returns {Types.RemainingFilenamesArrayType[][]} A RemainingFilenamesArray of subarrays.
  */
 export function GroupRequestsByNumberWithBranch(RemainingObjectArray: Types.RemainingFilenamesArrayType[], GroupSize: number): Types.RemainingFilenamesArrayType[][] {
 	if (RemainingObjectArray.every(RemainingObject => RemainingObject.BranchOrTag === RemainingObjectArray[0].BranchOrTag)) {
