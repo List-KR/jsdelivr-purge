@@ -106,7 +106,7 @@ export class PurgeRequestManager {
 					})
 				}
 
-				Actions.info(`Queue: jsDelivr server returns that the following files are purged:
+				Actions.info(`Queue: jsDelivr server returns that the following files are purged:\n
 				${RemainingFilenames.map(Filename => `@${Filename.BranchOrTag}/${Filename.Filename}`).map(Item => `- ${Item}`).join('\n')}
 				`)
 			})
