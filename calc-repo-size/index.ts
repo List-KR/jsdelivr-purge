@@ -1,7 +1,7 @@
 import * as GitHub from '@octokit/rest'
 import * as Actions from '@actions/core'
 import * as Commander from 'commander'
-import checkDiskSpace from 'check-disk-space'
+import * as DiskUsage from 'diskusage'
 
 const Program = new Commander.Command()
 
@@ -27,7 +27,7 @@ const ProgramOptions: ProgramOptionsType = Program.opts()
 const GitHubInstance = new GitHub.Octokit({auth: ProgramOptions.ghToken})
 const RepoSize = GitHubInstance.repos.get({owner: ProgramOptions.repo.split('/')[0], repo: ProgramOptions.repo.split('/')[1]})
 	.then(Response => Response.data.size)
-const DiskFreeSize = checkDiskSpace(ProgramOptions.ciWorkspacePath).then(DiskInfo => DiskInfo.free)
+const DiskFreeSize = DiskUsage.check(ProgramOptions.ciWorkspacePath).then(DiskInfo => DiskInfo.available)
 
 await Promise.all([RepoSize, DiskFreeSize]).then(([RepoSizeVaule, DiskFreeSizeVaule]) => {
 	Actions.info(`calc-repo-size: RepoSize: ${RepoSizeVaule}; DiskFreeSize: ${DiskFreeSizeVaule}`)
