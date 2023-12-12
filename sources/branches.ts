@@ -2,8 +2,8 @@ import * as Git from 'simple-git'
 import * as GitHub from '@octokit/rest'
 import * as Actions from '@actions/core'
 import * as Os from 'node:os'
-import type * as Types from './types'
-import {IsDebug} from './debug'
+import type * as Types from './types.js'
+import {IsDebug} from './debug.js'
 
 function CreateGitHubInstance(ProgramOptions: Types.ProgramOptionsType): GitHub.Octokit {
 	const GitHubInstance = new GitHub.Octokit({auth: ProgramOptions.ghToken})
@@ -44,5 +44,5 @@ export async function ListBranches(ProgramOptions: Types.ProgramOptionsType): Pr
 		Actions.debug(`ListBranches in branches.ts called: ${JSON.stringify(Branches)}`)
 	}
 
-	return Branches
+	return Branches.filter(Branch => Branch !== undefined && Branch !== null)
 }

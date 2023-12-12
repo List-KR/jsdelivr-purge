@@ -1,6 +1,6 @@
 {
   "name": "jsdelivr-purge",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "author": {
     "name": "PiQuark6046",
     "email": "piquark6046@proton.me",
@@ -21,23 +21,23 @@
     "calc-repo-size": "tsx calc-repo-size/index.ts"
   },
   "dependencies": {
-    "@actions/core": "^1.10.0",
-    "@octokit/rest": "^20.0.1",
-    "@types/luxon": "^3.3.3",
-    "@types/node": "^20.8.10",
+    "@actions/core": "^1.10.1",
+    "@octokit/rest": "^20.0.2",
+    "@types/luxon": "^3.3.7",
+    "@types/node": "^20.10.4",
     "check-disk-space": "^3.4.0",
     "commander": "^11.1.0",
-    "got": "^12.6.1",
-    "luxon": "^3.3.0",
-    "p-queue": "^7.4.1",
-    "simple-git": "^3.20.0",
-    "tsx": "^3.14.0",
-    "typescript": "^5.0.2"
+    "got": "^14.0.0",
+    "luxon": "^3.4.4",
+    "p-queue": "^8.0.0",
+    "simple-git": "^3.21.0",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.9.1",
-    "@typescript-eslint/parser": "^6.9.1",
-    "eslint": "^8.52.0",
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "@typescript-eslint/parser": "^6.13.2",
+    "eslint": "^8.55.0",
     "eslint-config-xo": "^0.43.1",
     "eslint-config-xo-typescript": "^1.0.1"
   }

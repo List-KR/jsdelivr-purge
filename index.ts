@@ -1,11 +1,11 @@
 import * as Commander from 'commander'
-import type * as Types from './sources/types'
-import {ExportArgs, IsDebug} from './sources/debug'
-import {ReplaceStringWithBooleanInObject} from './sources/utility'
-import {GetLatestWorkflowTime} from './sources/actions'
-import {ListBranches} from './sources/branches'
-import {GetChangedFilesFromSHAToHead, GetCommitSHAFromLatestWorkflowTime} from './sources/commits'
-import {PurgeRequestManager} from './sources/requests'
+import type * as Types from './sources/types.js'
+import {ExportArgs, IsDebug} from './sources/debug.js'
+import {ReplaceStringWithBooleanInObject} from './sources/utility.js'
+import {GetLatestWorkflowTime} from './sources/actions.js'
+import {ListBranches} from './sources/branches.js'
+import {CommitManager} from './sources/commits.js'
+import {PurgeRequestManager} from './sources/requests.js'
 
 const Program = new Commander.Command()
 
@@ -36,14 +36,22 @@ const LatestWorkflowRunTime = await GetLatestWorkflowTime(ProgramOptions).then(L
 const Branches = await ListBranches(ProgramOptions).then(Branches => Branches)
 const PurgeRequest = new PurgeRequestManager(ProgramOptions)
 for (const Branch of Branches) {
+	const CommitManagerInstance = new CommitManager(ProgramOptions, Branches)
 	// eslint-disable-next-line no-await-in-loop
-	const CommitSHA = await GetCommitSHAFromLatestWorkflowTime(ProgramOptions, LatestWorkflowRunTime, Branch).then(CommitSHA => CommitSHA)
-	if (CommitSHA === null) {
+	const CommitSHA = await CommitManagerInstance.GetCommitSHAFromLatestWorkflowTime(LatestWorkflowRunTime, Branch).then(CommitSHA => CommitSHA)
+	var ChangedFiles: string[] = []
+	if (CommitSHA.length === 0) {
 		continue
 	}
 
+	if (CommitSHA.length === 1) {
+		// eslint-disable-next-line no-await-in-loop
+		ChangedFiles = await CommitManagerInstance.GetChangedFilesFromACommit(CommitSHA.sha).then(ChangedFiles => ChangedFiles)
+	} else {
 	// eslint-disable-next-line no-await-in-loop
-	const ChangedFiles = await GetChangedFilesFromSHAToHead(ProgramOptions, CommitSHA, Branch, Branches[1]).then(ChangedFiles => ChangedFiles)
+		ChangedFiles = await CommitManagerInstance.GetChangedFilesFromSHAToHead(CommitSHA.sha, Branch).then(ChangedFiles => ChangedFiles)
+	}
+
 	PurgeRequest.AddURLs(ChangedFiles, Branch)
 }
 

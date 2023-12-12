@@ -1,13 +1,13 @@
-import * as Got from 'got'
+import got from 'got'
 import * as Actions from '@actions/core'
 import * as Os from 'node:os'
 import PQueue from 'p-queue'
-import {IsDebug} from './debug'
-import * as Utility from './utility'
-import type * as Types from './types'
+import {IsDebug} from './debug.js'
+import * as Utility from './utility.js'
+import type * as Types from './types.js'
 
 async function GetCDNResponse(ProgramOptions: Types.ProgramOptionsType, ID: string): Promise<Types.CDNStatusResponseType> {
-	const ResponseRaw: Types.CDNStatusResponseType = await Got.got(`https://purge.jsdelivr.net/status/${ID}`, {
+	const ResponseRaw: Types.CDNStatusResponseType = await got(`https://purge.jsdelivr.net/status/${ID}`, {
 		https: {
 			minVersion: 'TLSv1.3',
 			ciphers: 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256',
@@ -22,7 +22,7 @@ async function GetCDNResponse(ProgramOptions: Types.ProgramOptionsType, ID: stri
 }
 
 async function PostPurgeRequest(ProgramOptions: Types.ProgramOptionsType, BranchOrTag: string[], Filenames: string[]): Promise<Types.CDNPostResponseType> {
-	const ResponseRaw: Types.CDNPostResponseType = await Got.got.post('https://purge.jsdelivr.net/', {
+	const ResponseRaw: Types.CDNPostResponseType = await got.post('https://purge.jsdelivr.net/', {
 		headers: {
 			'cache-control': 'no-cache',
 		},
@@ -43,13 +43,13 @@ async function PostPurgeRequest(ProgramOptions: Types.ProgramOptionsType, Branch
 }
 
 export class PurgeRequestManager {
-	private readonly SharedPQueue = new PQueue({autoStart: false, concurrency: Os.cpus().length})
+	private readonly SharedPQueue = new PQueue({autoStart: true, concurrency: Os.cpus().length})
 	private readonly RemainingFilenames: Types.RemainingFilenamesArrayType[] = []
 
 	constructor(private readonly ProgramOptions: Types.ProgramOptionsType) {}
 
 	AddURLs(Filenames: string[], BranchOrTag: string) {
-		const SplittedFilenames = Utility.GroupStringsByNumber(Filenames.map(Filename => ({Filename, BranchOrTag})), 20) as Types.RemainingFilenamesArrayType[][]
+		const SplittedFilenames = Utility.GroupRequestsByNumberWithBranch(Filenames.map(Filename => ({Filename, BranchOrTag})), 20)
 
 		if (IsDebug(this.ProgramOptions)) {
 			Actions.debug(`SplittedFilenames variable in requests.ts: ${JSON.stringify(SplittedFilenames)}`)
@@ -76,7 +76,7 @@ export class PurgeRequestManager {
 				}
 
 				Actions.info(`Queue: jsDelivr server returns that the following files are purged:
-				${SplittedFilenameGroup.map(Filename => `@${Filename.BranchOrTag}/${Filename.Filename}`).join('\n  - ').replace(/^/, ' - ')}
+				${SplittedFilenameGroup.map(Filename => `@${Filename.BranchOrTag}/${Filename.Filename}`).map(Item => `- ${Item}`).join('\n')}
 				`)
 			})
 		}
@@ -91,7 +91,7 @@ export class PurgeRequestManager {
 	}
 
 	Start(): void {
-		const RemainingFilenamesGroup = Utility.GroupStringsByNumber(this.RemainingFilenames, 20) as Types.RemainingFilenamesArrayType[][]
+		const RemainingFilenamesGroup = Utility.GroupRequestsByNumberWithBranch(this.RemainingFilenames, 20)
 		for (const RemainingFilenames of RemainingFilenamesGroup) {
 			void this.SharedPQueue.add(async () => {
 				const CDNRequestArary: Types.CDNPostResponseType[] = []
@@ -106,9 +106,8 @@ export class PurgeRequestManager {
 					})
 				}
 
-				Actions.info(`Queue: jsDelivr server returns that the following files are purged:
-				${RemainingFilenames.map(Filename => `@${Filename.BranchOrTag}/${Filename.Filename}`).join('\n  - ').replace(/^/, ' - ')}
-				`)
+				Actions.info('Queue: jsDelivr server returns that the following files are purged:')
+				Actions.info(`${RemainingFilenames.map(Filename => `@${Filename.BranchOrTag}/${Filename.Filename}`).map(Item => `- ${Item}`).join('\n')}`)
 			})
 		}
 

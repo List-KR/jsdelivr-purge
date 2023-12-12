@@ -11,10 +11,6 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Set up NodeJS LTS
-      uses: actions/setup-node@v4
-      with:
-        node-version: 'lts/*'
     - name: Install npm packages
       run: |
         sudo npm update -g npm

@@ -1,3 +1,5 @@
+import type * as Types from './types.js'
+
 /**
  * @name ReplaceStringWithBooleanInObject
  * @description Replace string-based boolean properties with real booleans in an object.
@@ -36,18 +38,30 @@ export function IncludePropertiesInObject(CustomObjectArray: unknown[], CompareO
 	return CustomObjectArray.some(CustomObject => Object.entries(CompareObject).every(([Key, Value]) => CustomObject[Key] === Value))
 }
 
-/**
- * @name GroupStringsByNumber
- * @description Groups an array of strings into subarrays based on a specified group size.
- * @param {string[]} Strings - The array of strings to be grouped.
- * @param {number} GroupSize - The size of each group.
- * @returns {string[][]} An array of subarrays, where each subarray contains a group of strings.
- */
-export function GroupStringsByNumber(StringOrObject: unknown[], GroupSize: number): unknown[][] {
+function GroupObjectByNumber(StringOrObject: unknown[], GroupSize: number): unknown[][] {
 	const SplittedArray = new Array<unknown[]>(Math.ceil(StringOrObject.length / GroupSize))
 	for (var I = 0; I < SplittedArray.length; I++) {
 		SplittedArray[I] = StringOrObject.slice(I === 0 ? I : I * GroupSize, (I + 1) * GroupSize > StringOrObject.length ? StringOrObject.length : (I + 1) * GroupSize)
 	}
+
+	return SplittedArray
+}
+
+/**
+ * @name GroupStringsByNumber
+ * @description Groups a RemainingFilenamesArray into subarrays based on a specified group size. A group with latest tag will be separated from others.
+ * @param	{Types.RemainingFilenamesArrayType[]} RemainingObjectArray A RemainingFilenamesArray to group.
+ * @param	{number} GroupSize The maximum number of elements in each subarray.
+ * @returns {Types.RemainingFilenamesArrayType[][]} A RemainingFilenamesArray of subarrays.
+ */
+export function GroupRequestsByNumberWithBranch(RemainingObjectArray: Types.RemainingFilenamesArrayType[], GroupSize: number): Types.RemainingFilenamesArrayType[][] {
+	if (RemainingObjectArray.every(RemainingObject => RemainingObject.BranchOrTag === RemainingObjectArray[0].BranchOrTag)) {
+		return GroupObjectByNumber(RemainingObjectArray, GroupSize) as Types.RemainingFilenamesArrayType[][]
+	}
+
+	const SplittedArray: Types.RemainingFilenamesArrayType[][] = []
+	SplittedArray.push(...GroupObjectByNumber(RemainingObjectArray.filter(RemainingObject => RemainingObject.BranchOrTag === 'latest'), GroupSize) as Types.RemainingFilenamesArrayType[][])
+	SplittedArray.push(...GroupObjectByNumber(RemainingObjectArray.filter(RemainingObject => RemainingObject.BranchOrTag !== 'latest'), GroupSize) as Types.RemainingFilenamesArrayType[][])
 
 	return SplittedArray
 }
