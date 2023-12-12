@@ -8,14 +8,14 @@ If you want to purge jsDelivr cache automatically, please customize the followin
 name: 'Run jsDelivr-Purge'
 
 jobs:
-	jsdelivrpurge:
-		permissions:
-			actions: read
-			contents: read
-		runs-on: ubuntu-latest
-		steps:
-			- name: Set up NodeJS LTS
-			  uses: actions/setup-node@v4
+  jsdelivrpurge:
+    permissions:
+      actions: read
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up NodeJS LTS
+        uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
       - name: Run jsDelivr-Purge
