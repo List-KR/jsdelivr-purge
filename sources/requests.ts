@@ -76,7 +76,7 @@ export class PurgeRequestManager {
 				}
 
 				Actions.info(`Queue: jsDelivr server returns that the following files are purged:
-				${SplittedFilenameGroup.map(Filename => `@${Filename.BranchOrTag}/${Filename.Filename}`).join('\n  - ').replace(/^/, ' - ')}
+				${SplittedFilenameGroup.map(Filename => `@${Filename.BranchOrTag}/${Filename.Filename}`).map(Item => `- ${Item}`).join('\n')}
 				`)
 			})
 		}
@@ -107,7 +107,7 @@ export class PurgeRequestManager {
 				}
 
 				Actions.info(`Queue: jsDelivr server returns that the following files are purged:
-				${RemainingFilenames.map(Filename => `@${Filename.BranchOrTag}/${Filename.Filename}`).join('\n  - ').replace(/^/, ' - ')}
+				${RemainingFilenames.map(Filename => `@${Filename.BranchOrTag}/${Filename.Filename}`).map(Item => `- ${Item}`).join('\n')}
 				`)
 			})
 		}
