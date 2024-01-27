@@ -13,8 +13,6 @@ runs:
   steps:
     - name: Install npm packages
       run: |
-        sudo npm update -g npm
-        sudo npm update -g typescript
         npm i
       shell: bash
       working-directory: ${{ github.action_path }}
