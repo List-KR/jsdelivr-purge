@@ -1,6 +1,6 @@
 {
   "name": "jsdelivr-purge",
-  "version": "5.1.1",
+  "version": "5.3.0",
   "author": {
     "name": "PiQuark6046",
     "email": "piquark6046@proton.me",
@@ -17,8 +17,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "ci": "tsx index.ts",
-    "calc-repo-size": "tsx calc-repo-size/index.ts"
+    "ci": "tsx index.ts"
   },
   "dependencies": {
     "@actions/core": "^1.10.1",
@@ -26,7 +25,6 @@
     "@types/luxon": "^3.4.2",
     "@types/node": "^20.11.7",
     "commander": "^11.1.0",
-    "diskusage": "^1.2.0",
     "got": "^14.0.0",
     "luxon": "^3.4.4",
     "p-queue": "^8.0.1",

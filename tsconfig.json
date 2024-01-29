@@ -10,7 +10,6 @@
   },
   "include": [
     "index.ts",
-    "sources/**/*.ts",
-    "calc-repo-size/**/*.ts"
+    "sources/**/*.ts"
   ]
 }

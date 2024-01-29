@@ -11,7 +11,6 @@ module.exports = {
 				'xo-typescript',
 			],
 			files: [
-				'calc-repo-size/**/*.ts',
 				'sources/**/*.ts',
 				'index.ts'
 			],

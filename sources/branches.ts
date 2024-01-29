@@ -23,22 +23,11 @@ function CreateGitInstance(BasePath: string): Git.SimpleGit {
  */
 export async function ListBranches(ProgramOptions: Types.ProgramOptionsType): Promise<string[]> {
 	const Branches: string[] = ['latest']
-	if (ProgramOptions.shouldUseApi) {
-		const GitHubInstance = CreateGitHubInstance(ProgramOptions)
-		const [RepoOwner, RepoName] = ProgramOptions.repo.split('/')
-		Branches.push((await GitHubInstance.repos.get({owner: RepoOwner, repo: RepoName})).data.default_branch)
-		const OtherBranches = (await GitHubInstance.repos.listBranches({owner: RepoOwner, repo: RepoName}).then(Branches => Branches.data))
-			.map(Item => Item.name)
-		OtherBranches.forEach(Item => Branches.push(ProgramOptions.branch.split(' ').find(Branch => Branch === Item)))
-	}
-
-	if (!ProgramOptions.shouldUseApi) {
-		const GitInstance = CreateGitInstance(ProgramOptions.ciWorkspacePath)
-		Branches.push(await GitInstance.branchLocal().then(Branches => Branches.current))
-		// Branches[1] is always the current/default branch.
-		const OtherBranches = (await GitInstance.branchLocal().then(Branches => Branches.all)).filter(Branch => Branch !== Branches[1])
-		OtherBranches.forEach(Item => Branches.push(ProgramOptions.branch.split(' ').find(Branch => Branch === Item)))
-	}
+	const GitInstance = CreateGitInstance(ProgramOptions.ciWorkspacePath)
+	Branches.push(await GitInstance.branchLocal().then(Branches => Branches.current))
+	// Branches[1] is always the current/default branch.
+	const OtherBranches = (await GitInstance.branchLocal().then(Branches => Branches.all)).filter(Branch => Branch !== Branches[1])
+	OtherBranches.forEach(Item => Branches.push(ProgramOptions.branch.split(' ').find(Branch => Branch === Item)))
 
 	if (IsDebug(ProgramOptions)) {
 		Actions.debug(`ListBranches in branches.ts called: ${JSON.stringify(Branches)}`)

@@ -7,7 +7,6 @@ export type ProgramOptionsRawType = {
 	branch: string;
 	ciWorkspacePath: string;
 	ciActionPath: string;
-	shouldUseApi: 'true' | 'false';
 }
 
 export type ProgramOptionsType = {
@@ -18,7 +17,6 @@ export type ProgramOptionsType = {
 	branch: string;
 	ciWorkspacePath: string;
 	ciActionPath: string;
-	shouldUseApi: boolean;
 }
 
 export type CDNStatusResponseType = {

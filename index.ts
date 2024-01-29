@@ -6,6 +6,10 @@ import {GetLatestWorkflowTime} from './sources/actions.js'
 import {ListBranches} from './sources/branches.js'
 import {CommitManager} from './sources/commits.js'
 import {PurgeRequestManager} from './sources/requests.js'
+import * as Actions from '@actions/core'
+import * as Os from 'node:os'
+
+Actions.info(`Running on ${Os.cpus()[0].model} with ${Os.cpus().length} threads/vCPUs.`)
 
 const Program = new Commander.Command()
 
