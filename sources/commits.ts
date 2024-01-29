@@ -26,57 +26,27 @@ export class CommitManager {
 	 */
 	async GetCommitSHAFromLatestWorkflowTime(LatestWorkflowRunTime: number, Branch: string): Promise<Types.CommitSHA> {
 		var MatchedCommitTimeAddress = 0
-		if (this.ProgramOptions.shouldUseApi) {
-			const GitHubInstance = CreateGitHubInstance(this.ProgramOptions)
-			const GitHubListCommits = await GitHubInstance.repos.listCommits({
-				owner: this.ProgramOptions.repo.split('/')[0],
-				repo: this.ProgramOptions.repo.split('/')[1],
-				sha: Branch === 'latest' ? this.Branches[1] : Branch,
-			}).then(Response => Response.data)
-			for (const CommitRaw of GitHubListCommits) {
-				if (DateTime.fromISO(CommitRaw.commit.author.date).toMillis() < LatestWorkflowRunTime) {
-					break
-				}
-
-				MatchedCommitTimeAddress++
+		const GitInstance = CreateGitInstance(this.ProgramOptions.ciWorkspacePath)
+		const GitLog = (await GitInstance.log(['--date=iso-strict'])).all
+		for (const CommitRaw of GitLog) {
+			if (DateTime.fromISO(CommitRaw.date).toMillis() < LatestWorkflowRunTime) {
+				break
 			}
 
-			// If any commit is pushed after the latest workflow time, skip the branch.
-			if (MatchedCommitTimeAddress === 0) {
-				return {sha: '', length: 0}
-			}
-
-			// If the wokflow had not executed before, return SHA of the oldest commit.
-			if (LatestWorkflowRunTime === 0) {
-				return {sha: GitHubListCommits[GitHubListCommits.length - 1].sha, length: GitHubListCommits.length}
-			}
-
-			return {sha: GitHubListCommits[MatchedCommitTimeAddress].sha, length: GitHubListCommits.length}
+			MatchedCommitTimeAddress++
 		}
 
-		if (!this.ProgramOptions.shouldUseApi) {
-			const GitInstance = CreateGitInstance(this.ProgramOptions.ciWorkspacePath)
-			const GitLog = (await GitInstance.log(['--date=iso-strict'])).all
-			for (const CommitRaw of GitLog) {
-				if (DateTime.fromISO(CommitRaw.date).toMillis() < LatestWorkflowRunTime) {
-					break
-				}
-
-				MatchedCommitTimeAddress++
-			}
-
-			// If any commit is pushed after the latest workflow time, skip the branch.
-			if (MatchedCommitTimeAddress === 0) {
-				return {sha: '', length: 0}
-			}
-
-			// If the wokflow had not executed before, return SHA of the oldest commit.
-			if (LatestWorkflowRunTime === 0) {
-				return {sha: GitLog[GitLog.length - 1].hash, length: GitLog.length}
-			}
-
-			return {sha: GitLog[MatchedCommitTimeAddress].hash, length: GitLog.length}
+		// If any commit is pushed after the latest workflow time, skip the branch.
+		if (MatchedCommitTimeAddress === 0) {
+			return {sha: '', length: 0}
 		}
+
+		// If the wokflow had not executed before, return SHA of the oldest commit.
+		if (LatestWorkflowRunTime === 0) {
+			return {sha: GitLog[GitLog.length - 1].hash, length: GitLog.length}
+		}
+
+		return {sha: GitLog[MatchedCommitTimeAddress].hash, length: GitLog.length}
 	}
 
 	/**
@@ -87,22 +57,9 @@ export class CommitManager {
 	 * @returns {Promise<string[]>} A list of changed files.
 	 */
 	async GetChangedFilesFromSHAToHead(CommitSHA: string, Branch: string): Promise<string[]> {
-		if (this.ProgramOptions.shouldUseApi) {
-			const GitHubInstance = CreateGitHubInstance(this.ProgramOptions)
-			const GitHubComparingRaw = await GitHubInstance.repos.compareCommits({
-				owner: this.ProgramOptions.repo.split('/')[0],
-				repo: this.ProgramOptions.repo.split('/')[1],
-				head: Branch === 'latest' ? this.Branches[1] : Branch,
-				base: CommitSHA,
-			}).then(Response => Response.data)
-			return GitHubComparingRaw.files.map(File => File.filename)
-		}
-
-		if (!this.ProgramOptions.shouldUseApi) {
-			const GitInstance = CreateGitInstance(this.ProgramOptions.ciWorkspacePath)
-			const ChangedFiles = (await GitInstance.diff(['--name-only', `${CommitSHA}...${Branch === 'latest' ? this.Branches[1] : Branch}`])).split('\n')
-			return ChangedFiles[ChangedFiles.length - 1] === '' ? ChangedFiles.slice(0, ChangedFiles.length - 1) : ChangedFiles
-		}
+		const GitInstance = CreateGitInstance(this.ProgramOptions.ciWorkspacePath)
+		const ChangedFiles = (await GitInstance.diff(['--name-only', `${CommitSHA}...${Branch === 'latest' ? this.Branches[1] : Branch}`])).split('\n')
+		return ChangedFiles[ChangedFiles.length - 1] === '' ? ChangedFiles.slice(0, ChangedFiles.length - 1) : ChangedFiles
 	}
 
 	/**
@@ -112,22 +69,10 @@ export class CommitManager {
 	 * @returns {Promise<string[]>} A list of changed files.
 	 */
 	async GetChangedFilesFromACommit(CommitSHA: string): Promise<string[]> {
-		if (this.ProgramOptions.shouldUseApi) {
-			const GitHubInstance = CreateGitHubInstance(this.ProgramOptions)
-			const GitHubComparingRaw = await GitHubInstance.repos.getCommit({
-				owner: this.ProgramOptions.repo.split('/')[0],
-				repo: this.ProgramOptions.repo.split('/')[1],
-				ref: CommitSHA,
-			}).then(Response => Response.data)
-			return GitHubComparingRaw.files.map(File => `/gh/${File.filename}`)
-		}
-
-		if (!this.ProgramOptions.shouldUseApi) {
-			const GitInstance = CreateGitInstance(this.ProgramOptions.ciWorkspacePath)
-			const ChangedFiles = (await GitInstance.show(['--pretty=format:"%f"', '--name-only', CommitSHA])).split('\n')
-			ChangedFiles.shift() // Remove the commit message.
-			ChangedFiles.pop()
-			return ChangedFiles
-		}
+		const GitInstance = CreateGitInstance(this.ProgramOptions.ciWorkspacePath)
+		const ChangedFiles = (await GitInstance.show(['--pretty=format:"%f"', '--name-only', CommitSHA])).split('\n')
+		ChangedFiles.shift() // Remove the commit message.
+		ChangedFiles.pop()
+		return ChangedFiles
 	}
 }

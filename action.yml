@@ -16,22 +16,6 @@ runs:
         npm i
       shell: bash
       working-directory: ${{ github.action_path }}
-    - name: Check if size of the repo exceeds the runner's hardware capacity
-      id: check_size
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-        REPO: ${{ github.repository }}
-        CI_WORKSPACE_PATH: ${{ github.workspace }}
-      run: |
-        npm run calc-repo-size -- --gh-token "$GITHUB_TOKEN" --repo "$REPO" --ci-workspace-path "$CI_WORKSPACE_PATH"
-      shell: bash
-      working-directory: ${{ github.action_path }}
-    - name: Clone repo into github.workspace
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: ${{ github.event.repository.default_branch }}
-      if: ${{  steps.check_size.outputs.should_api != 'true' }}
     - name: Run program
       env:
         GITHUB_TOKEN: ${{ github.token }}
@@ -40,8 +24,7 @@ runs:
         WORKFLOWREF: ${{ github.workflow_ref }}
         CI_WORKSPACE_PATH: ${{ github.workspace }}
         CI_ACTION_PATH: ${{ github.action_path }}
-        SHOULD_USE_API: ${{ steps.check_size.outputs.should_use_api }}
       run: |
-        npm run ci -- --gh-token "$GITHUB_TOKEN" --repo "$REPO" --workflow-ref "$WORKFLOWREF" --branch "$BRANCHE" --ci-workspace-path "$CI_WORKSPACE_PATH" --ci-action-path "$CI_ACTION_PATH" --should-use-api "$SHOULD_USE_API"
+        npm run ci -- --gh-token "$GITHUB_TOKEN" --repo "$REPO" --workflow-ref "$WORKFLOWREF" --branch "$BRANCHE" --ci-workspace-path "$CI_WORKSPACE_PATH" --ci-action-path "$CI_ACTION_PATH"
       shell: bash
       working-directory: ${{ github.action_path }}
