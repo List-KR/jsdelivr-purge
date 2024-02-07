@@ -21,7 +21,7 @@ Program.option('--debug', 'output extra debugging', false)
 	.option('--branch <BRANCH>', 'A GitHub branch. eg: master', '')
 	.option('--ci-workspace-path <PATH>', 'A path to the CI workspace.', '')
 	.option('--ci-action-path <PATH>', 'A path to the CI action.', '')
-	.option('--should-use-api <TRUE_OR_FALSE>', 'Should use GitHub API?', 'false')
+	.option('--jd-token <TOKEN>', 'jsDelivr token to purge', '')
 
 // Initialize Input of the options and export them.
 Program.parse()
