@@ -4,11 +4,6 @@ import * as Os from 'node:os'
 import {DateTime} from 'luxon'
 import type * as Types from './types.js'
 
-function CreateGitHubInstance(ProgramOptions: Types.ProgramOptionsType): GitHub.Octokit {
-	const GitHubInstance = new GitHub.Octokit({auth: ProgramOptions.ghToken})
-	return GitHubInstance
-}
-
 function CreateGitInstance(BasePath: string): Git.SimpleGit {
 	const GitInstance = Git.simpleGit(BasePath, {maxConcurrentProcesses: Os.cpus().length})
 	return GitInstance
