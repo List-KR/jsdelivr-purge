@@ -14,10 +14,9 @@ async function GetCDNResponse(ProgramOptions: Types.ProgramOptionsType, ID: stri
 		},
 		http2: true,
 	}).json()
-	if (IsDebug(ProgramOptions)) {
-		Actions.debug(`GetCDNResponse in requests.ts called: ${JSON.stringify(ResponseRaw)}`)
-	}
-
+	Actions.startGroup(`GetCDNResponse called: ${ID}`)
+	Actions.info(JSON.stringify(ResponseRaw))
+	Actions.endGroup()
 	return ResponseRaw
 }
 
@@ -35,10 +34,9 @@ async function PostPurgeRequest(ProgramOptions: Types.ProgramOptionsType, Branch
 		},
 		http2: true,
 	}).json()
-	if (IsDebug(ProgramOptions)) {
-		Actions.debug(`PostPurgeRequest in requests.ts called: ${JSON.stringify(ResponseRaw)}`)
-	}
-
+	Actions.startGroup(`PostPurgeRequest called: ${ResponseRaw.id}`)
+	Actions.info(JSON.stringify(ResponseRaw))
+	Actions.endGroup()
 	return ResponseRaw
 }
 
