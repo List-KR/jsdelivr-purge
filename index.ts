@@ -37,7 +37,7 @@ if (IsDebug(ProgramRawOptions)) {
 const ProgramOptions = ReplaceStringWithBooleanInObject(ProgramRawOptions) as Types.ProgramOptionsType
 
 // Print the runner's IP address.
-Actions.info(`The runner's IP address: ${await GetIPAddress()}`)
+Actions.info(`The runner's IP address: ${await GetIPAddress().then(IPAddress => IPAddress)}`)
 
 // Workflow
 const LatestWorkflowRunTime = await GetLatestWorkflowTime(ProgramOptions).then(LatestWorkflowRunTime => LatestWorkflowRunTime)
