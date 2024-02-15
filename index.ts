@@ -6,6 +6,7 @@ import {GetLatestWorkflowTime} from './sources/actions.js'
 import {ListBranches} from './sources/branches.js'
 import {CommitManager} from './sources/commits.js'
 import {PurgeRequestManager} from './sources/requests.js'
+import {GetIPAddress} from './sources/ipcheck.js'
 import * as Actions from '@actions/core'
 import * as Os from 'node:os'
 
@@ -34,6 +35,9 @@ if (IsDebug(ProgramRawOptions)) {
 
 // Redefine with boolean.
 const ProgramOptions = ReplaceStringWithBooleanInObject(ProgramRawOptions) as Types.ProgramOptionsType
+
+// Print the runner's IP address.
+Actions.info(`The runner's IP address: ${await GetIPAddress()}`)
 
 // Workflow
 const LatestWorkflowRunTime = await GetLatestWorkflowTime(ProgramOptions).then(LatestWorkflowRunTime => LatestWorkflowRunTime)
