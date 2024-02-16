@@ -1,6 +1,6 @@
 {
   "name": "jsdelivr-purge",
-  "version": "5.3.0",
+  "version": "5.4.0",
   "author": {
     "name": "PiQuark6046",
     "email": "piquark6046@proton.me",
@@ -17,26 +17,29 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "ci": "tsx index.ts"
+    "ci": "tsx index.ts",
+    "lint": "tsc && eslint . --ext .ts"
   },
   "dependencies": {
     "@actions/core": "^1.10.1",
+    "@noble/hashes": "^1.3.3",
     "@octokit/rest": "^20.0.2",
     "@types/luxon": "^3.4.2",
-    "@types/node": "^20.11.7",
+    "@types/node": "^20.11.19",
     "commander": "^12.0.0",
-    "got": "^14.0.0",
+    "got": "^14.2.0",
+    "ip-regex": "^5.0.0",
     "luxon": "^3.4.4",
     "p-queue": "^8.0.1",
     "simple-git": "^3.22.0",
-    "tsx": "^4.7.0",
+    "tsx": "^4.7.1",
     "typescript": "^5.3.3"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.19.1",
-    "@typescript-eslint/parser": "^6.19.1",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
     "eslint": "^8.56.0",
-    "eslint-config-xo": "^0.43.1",
-    "eslint-config-xo-typescript": "^1.0.1"
+    "eslint-config-xo": "^0.44.0",
+    "eslint-config-xo-typescript": "^2.0.0"
   }
 }

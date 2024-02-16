@@ -6,6 +6,8 @@ import {GetLatestWorkflowTime} from './sources/actions.js'
 import {ListBranches} from './sources/branches.js'
 import {CommitManager} from './sources/commits.js'
 import {PurgeRequestManager} from './sources/requests.js'
+import {GetIPAddress} from './sources/ipcheck.js'
+import {GitHubRAWHash} from './sources/hash.js'
 import * as Actions from '@actions/core'
 import * as Os from 'node:os'
 
@@ -21,7 +23,6 @@ Program.option('--debug', 'output extra debugging', false)
 	.option('--branch <BRANCH>', 'A GitHub branch. eg: master', '')
 	.option('--ci-workspace-path <PATH>', 'A path to the CI workspace.', '')
 	.option('--ci-action-path <PATH>', 'A path to the CI action.', '')
-	.option('--should-use-api <TRUE_OR_FALSE>', 'Should use GitHub API?', 'false')
 
 // Initialize Input of the options and export them.
 Program.parse()
@@ -35,9 +36,21 @@ if (IsDebug(ProgramRawOptions)) {
 // Redefine with boolean.
 const ProgramOptions = ReplaceStringWithBooleanInObject(ProgramRawOptions) as Types.ProgramOptionsType
 
+// Print the runner's IP address.
+Actions.info(`The runner's IP address: ${await GetIPAddress().then(IPAddress => IPAddress)}`)
+
 // Workflow
-const LatestWorkflowRunTime = await GetLatestWorkflowTime(ProgramOptions).then(LatestWorkflowRunTime => LatestWorkflowRunTime)
 const Branches = await ListBranches(ProgramOptions).then(Branches => Branches)
+// Hold until checking hash is done.
+performance.mark('githubrawhash')
+const GitHubRAWHashInstance = new GitHubRAWHash(ProgramOptions, Branches)
+GitHubRAWHashInstance.Initialize()
+await GitHubRAWHashInstance.Register()
+await GitHubRAWHashInstance.Check()
+Actions.info(`Checking hashes took ${Math.floor(performance.measure('githubrawhash-duration', 'githubrawhash').duration)} ms.`)
+
+performance.mark('purge')
+const LatestWorkflowRunTime = await GetLatestWorkflowTime(ProgramOptions).then(LatestWorkflowRunTime => LatestWorkflowRunTime)
 const PurgeRequest = new PurgeRequestManager(ProgramOptions)
 for (const Branch of Branches) {
 	const CommitManagerInstance = new CommitManager(ProgramOptions, Branches)
@@ -60,3 +73,4 @@ for (const Branch of Branches) {
 }
 
 PurgeRequest.Start()
+PurgeRequest.OnEnded()
