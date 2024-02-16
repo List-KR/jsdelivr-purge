@@ -42,12 +42,14 @@ Actions.info(`The runner's IP address: ${await GetIPAddress().then(IPAddress => 
 // Workflow
 const Branches = await ListBranches(ProgramOptions).then(Branches => Branches)
 // Hold until checking hash is done.
+performance.mark('githubrawhash')
 const GitHubRAWHashInstance = new GitHubRAWHash(ProgramOptions, Branches)
 GitHubRAWHashInstance.Initialize()
 await GitHubRAWHashInstance.Register()
 await GitHubRAWHashInstance.Check()
-Actions.info('Checking hash is passed.')
+Actions.info(`Checking hashes took ${Math.floor(performance.measure('githubrawhash-duration', 'githubrawhash').duration)} ms.`)
 
+performance.mark('purge')
 const LatestWorkflowRunTime = await GetLatestWorkflowTime(ProgramOptions).then(LatestWorkflowRunTime => LatestWorkflowRunTime)
 const PurgeRequest = new PurgeRequestManager(ProgramOptions)
 for (const Branch of Branches) {
@@ -71,3 +73,4 @@ for (const Branch of Branches) {
 }
 
 PurgeRequest.Start()
+Actions.info(`Purging took ${Math.floor(performance.measure('purge-duration', 'purge').duration)} ms.`)
