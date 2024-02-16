@@ -7,6 +7,7 @@ import {ListBranches} from './sources/branches.js'
 import {CommitManager} from './sources/commits.js'
 import {PurgeRequestManager} from './sources/requests.js'
 import {GetIPAddress} from './sources/ipcheck.js'
+import {GitHubRAWHash} from './sources/hash.js'
 import * as Actions from '@actions/core'
 import * as Os from 'node:os'
 
@@ -40,8 +41,15 @@ const ProgramOptions = ReplaceStringWithBooleanInObject(ProgramRawOptions) as Ty
 Actions.info(`The runner's IP address: ${await GetIPAddress().then(IPAddress => IPAddress)}`)
 
 // Workflow
-const LatestWorkflowRunTime = await GetLatestWorkflowTime(ProgramOptions).then(LatestWorkflowRunTime => LatestWorkflowRunTime)
 const Branches = await ListBranches(ProgramOptions).then(Branches => Branches)
+// Hold until checking hash is done.
+const GitHubRAWHashInstance = new GitHubRAWHash(ProgramOptions, Branches)
+GitHubRAWHashInstance.Initialize()
+await GitHubRAWHashInstance.Register()
+await GitHubRAWHashInstance.Check()
+Actions.info('Checking hash is passed.')
+
+const LatestWorkflowRunTime = await GetLatestWorkflowTime(ProgramOptions).then(LatestWorkflowRunTime => LatestWorkflowRunTime)
 const PurgeRequest = new PurgeRequestManager(ProgramOptions)
 for (const Branch of Branches) {
 	const CommitManagerInstance = new CommitManager(ProgramOptions, Branches)
