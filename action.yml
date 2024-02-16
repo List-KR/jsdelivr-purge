@@ -7,9 +7,6 @@ inputs:
     description: 'The your branches that you want to purge cache existing in jsDelivr'
     required: false
     default: 'latest'
-  jdtoken:
-    description: 'The jsDelivr API token to purge cache existing in jsDelivr'
-    required: true
 
 runs:
   using: 'composite'
@@ -27,8 +24,7 @@ runs:
         WORKFLOWREF: ${{ github.workflow_ref }}
         CI_WORKSPACE_PATH: ${{ github.workspace }}
         CI_ACTION_PATH: ${{ github.action_path }}
-        JSDELIVR_TOKEN: ${{ inputs.jdtoken }}
       run: |
-        npm run ci -- --gh-token "$GITHUB_TOKEN" --repo "$REPO" --workflow-ref "$WORKFLOWREF" --branch "$BRANCHE" --ci-workspace-path "$CI_WORKSPACE_PATH" --ci-action-path "$CI_ACTION_PATH" --jd-token "$JSDELIVR_TOKEN"
+        npm run ci -- --gh-token "$GITHUB_TOKEN" --repo "$REPO" --workflow-ref "$WORKFLOWREF" --branch "$BRANCHE" --ci-workspace-path "$CI_WORKSPACE_PATH" --ci-action-path "$CI_ACTION_PATH"
       shell: bash
       working-directory: ${{ github.action_path }}
