@@ -39,7 +39,7 @@ async function ReadFileAsUint8Array(ProgramOptions: Types.ProgramOptionsType, Br
 
 export class GitHubRAWHash {
 	private readonly Branches: string[] = []
-	private readonly GitHubRAWHashMap = new Map<{Branch: string; Filename: string}, string>()
+	private readonly GitHubRAWHashMap = new Map<string, string>()
 
 	constructor(private readonly ProgramOptions: Types.ProgramOptionsType, private readonly BranchesOrTag: string[]) {}
 
@@ -56,7 +56,7 @@ export class GitHubRAWHash {
 				PromiseList.push(new Promise(async Resolve => {
 					const Uint8Data = await ReadFileAsUint8Array(this.ProgramOptions, Branch, Filename)
 					const SHA3 = GetSHA3FromUint8Array(Uint8Data)
-					this.GitHubRAWHashMap.set({Branch, Filename}, SHA3)
+					this.GitHubRAWHashMap.set(JSON.stringify({Branch, Filename}), SHA3)
 					Resolve()
 				}))
 			}
@@ -75,8 +75,7 @@ export class GitHubRAWHash {
 					for (var I = 0; I < Number.MAX_SAFE_INTEGER; I++) {
 						// eslint-disable-next-line no-await-in-loop
 						const Uint8Data = await GetFileFromGitHubRAW(this.ProgramOptions, Branch, Filename)
-						const SHA3 = GetSHA3FromUint8Array(Uint8Data)
-						if (this.GitHubRAWHashMap.get({Branch, Filename}) === SHA3) {
+						if (GetSHA3FromUint8Array(Uint8Data) === this.GitHubRAWHashMap.get(JSON.stringify({Branch, Filename}))) {
 							break
 						}
 
