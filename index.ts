@@ -73,4 +73,4 @@ for (const Branch of Branches) {
 }
 
 PurgeRequest.Start()
-Actions.info(`Purging took ${Math.floor(performance.measure('purge-duration', 'purge').duration)} ms.`)
+PurgeRequest.OnEnded()

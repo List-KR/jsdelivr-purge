@@ -80,14 +80,6 @@ export class PurgeRequestManager {
 		}
 	}
 
-	RunningJobs(): number {
-		return this.SharedPQueue.pending
-	}
-
-	WaitingJobs(): number {
-		return this.SharedPQueue.size
-	}
-
 	Start(): void {
 		const RemainingFilenamesGroup = Utility.GroupRequestsByNumberWithBranch(this.RemainingFilenames, 20)
 		for (const RemainingFilenames of RemainingFilenamesGroup) {
@@ -110,5 +102,11 @@ export class PurgeRequestManager {
 		}
 
 		this.SharedPQueue.start()
+	}
+
+	OnEnded(): void {
+		this.SharedPQueue.on('idle', () => {
+			Actions.info(`Purging took ${Math.floor(performance.measure('purge-duration', 'purge').duration)} ms.`)
+		})
 	}
 }
