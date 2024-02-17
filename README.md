@@ -23,7 +23,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run jsDelivr-Purge
-        uses: List-KR/jsdelivr-purge@5.4.0
+        uses: List-KR/jsdelivr-purge@5.5.0
 ```
 
 The jsDelivr-Purge supports `workflow_dispatch`, `schedule` and `push` event.
