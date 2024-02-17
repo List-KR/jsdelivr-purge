@@ -39,37 +39,45 @@ const ProgramOptions = ReplaceStringWithBooleanInObject(ProgramRawOptions) as Ty
 // Print the runner's IP address.
 Actions.info(`The runner's IP address: ${await GetIPAddress().then(IPAddress => IPAddress)}`)
 
-// Workflow
-const Branches = await ListBranches(ProgramOptions).then(Branches => Branches)
-// Hold until checking hash is done.
-performance.mark('githubrawhash')
-const GitHubRAWHashInstance = new GitHubRAWHash(ProgramOptions, Branches)
-GitHubRAWHashInstance.Initialize()
-await GitHubRAWHashInstance.Register()
-await GitHubRAWHashInstance.Check()
-Actions.info(`Checking hashes took ${Math.floor(performance.measure('githubrawhash-duration', 'githubrawhash').duration)} ms.`)
-
-performance.mark('purge')
+// Get the latest workflow run time.
+performance.mark('latestworkflowtime')
 const LatestWorkflowRunTime = await GetLatestWorkflowTime(ProgramOptions).then(LatestWorkflowRunTime => LatestWorkflowRunTime)
-const PurgeRequest = new PurgeRequestManager(ProgramOptions)
+Actions.info(`Getting the latest workflow run took ${Math.floor(performance.measure('latestworkflowtime-duration', 'latestworkflowtime').duration)} ms.`)
+
+// List branches.
+const Branches = await ListBranches(ProgramOptions).then(Branches => Branches)
+
+// Get changed files.
+var ChangedFiles: Array<{Branch: string; Filename: string}> = []
 for (const Branch of Branches) {
 	const CommitManagerInstance = new CommitManager(ProgramOptions, Branches)
 	// eslint-disable-next-line no-await-in-loop
 	const CommitSHA = await CommitManagerInstance.GetCommitSHAFromLatestWorkflowTime(LatestWorkflowRunTime, Branch).then(CommitSHA => CommitSHA)
-	var ChangedFiles: string[] = []
 	if (CommitSHA.length === 0) {
 		continue
 	}
 
 	if (CommitSHA.length === 1) {
 		// eslint-disable-next-line no-await-in-loop
-		ChangedFiles = await CommitManagerInstance.GetChangedFilesFromACommit(CommitSHA.sha).then(ChangedFiles => ChangedFiles)
+		ChangedFiles.push(...(await CommitManagerInstance.GetChangedFilesFromACommit(CommitSHA.sha).then(ChangedFiles => ChangedFiles)).map(ChangedFile => ({Branch, Filename: ChangedFile})))
 	} else {
-	// eslint-disable-next-line no-await-in-loop
-		ChangedFiles = await CommitManagerInstance.GetChangedFilesFromSHAToHead(CommitSHA.sha, Branch).then(ChangedFiles => ChangedFiles)
+		// eslint-disable-next-line no-await-in-loop
+		ChangedFiles.push(...(await CommitManagerInstance.GetChangedFilesFromSHAToHead(CommitSHA.sha, Branch).then(ChangedFiles => ChangedFiles)).map(ChangedFile => ({Branch, Filename: ChangedFile})))
 	}
+}
 
-	PurgeRequest.AddURLs(ChangedFiles, Branch)
+// Hold until checking hash is done.
+performance.mark('githubrawhash')
+const GitHubRAWHashInstance = new GitHubRAWHash(ProgramOptions, ChangedFiles)
+await GitHubRAWHashInstance.Register()
+await GitHubRAWHashInstance.Check()
+Actions.info(`Checking hashes took ${Math.floor(performance.measure('githubrawhash-duration', 'githubrawhash').duration)} ms.`)
+
+performance.mark('purge')
+const PurgeRequest = new PurgeRequestManager(ProgramOptions)
+PurgeRequest.AddURLs(ChangedFiles.filter(ChangedFile => ChangedFile.Branch === 'latest').map(ChangedFile => ChangedFile.Filename), 'latest')
+for (const Branch of Branches.filter(Branch => Branch !== 'latest')) {
+	PurgeRequest.AddURLs(ChangedFiles.filter(ChangedFile => ChangedFile.Branch === Branch).map(ChangedFile => ChangedFile.Filename), Branch)
 }
 
 PurgeRequest.Start()
