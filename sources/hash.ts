@@ -29,7 +29,7 @@ function CreateGitInstance(BasePath: string): Git.SimpleGit {
 
 async function ReadFileAsUint8Array(ProgramOptions: Types.ProgramOptionsType, BranchOrTag: string, Filename: string, Branches: string[]): Promise<Uint8Array> {
 	const GitInstance = CreateGitInstance(ProgramOptions.ciWorkspacePath)
-	return GitInstance.show([`${BranchOrTag === 'latest' ? BranchOrTag : Branches[1]}:${Filename}`]).then(Target => new TextEncoder().encode(Target))
+	return GitInstance.show([`${BranchOrTag === 'latest' ? Branches[1] : BranchOrTag}:${Filename}`]).then(Target => new TextEncoder().encode(Target))
 }
 
 export class GitHubRAWHash {
