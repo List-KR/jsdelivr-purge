@@ -54,7 +54,7 @@ export class GitHubRAWHash {
 
 	async Check() {
 		const PromiseList: Array<Promise<void>> = []
-		for (const ChangedFile of this.ChangedFiles) {
+		for (const ChangedFile of this.ChangedFiles.filter(ChangedFile => ChangedFile.Branch !== 'latest')) {
 			// eslint-disable-next-line no-async-promise-executor
 			PromiseList.push(new Promise(async Resolve => {
 				for (var I = 0; I < Number.MAX_SAFE_INTEGER; I++) {
