@@ -56,6 +56,11 @@ export class GitHubRAWHash {
 	}
 
 	async Check() {
+		if (this.GitHubRAWHashMap.size > 15) {
+			Actions.warning('The number of changed files is over 15. It may take a long time to check the hash. Skipped.')
+			return
+		}
+
 		const PromiseList: Array<Promise<void>> = []
 		for (const ChangedFile of this.ChangedFiles.filter(ChangedFile => ChangedFile.Branch !== 'latest')) {
 			// eslint-disable-next-line no-async-promise-executor
@@ -64,11 +69,8 @@ export class GitHubRAWHash {
 					// eslint-disable-next-line no-await-in-loop
 					const Uint8Data = await GetFileFromGitHubRAW(this.ProgramOptions, ChangedFile.Branch, ChangedFile.Filename)
 					if (GetSHA3FromUint8Array(Uint8Data) === this.GitHubRAWHashMap.get(JSON.stringify({Branch: ChangedFile.Branch, Filename: ChangedFile.Filename}))) {
-						Actions.info(`OK: Hash of ${ChangedFile.Filename} in ${ChangedFile.Branch} is ${GetSHA3FromUint8Array(Uint8Data)}`)
 						break
 					}
-
-					Actions.info(`Retrying: Hash of ${ChangedFile.Filename} in ${ChangedFile.Branch} is ${GetSHA3FromUint8Array(Uint8Data)}`)
 
 					// eslint-disable-next-line no-await-in-loop
 					await new Promise(Resolve => {
