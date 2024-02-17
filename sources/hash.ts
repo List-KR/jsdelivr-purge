@@ -1,3 +1,4 @@
+import * as Actions from '@actions/core'
 import * as Hashes from '@noble/hashes/sha3'
 import * as HashesUtils from '@noble/hashes/utils'
 import * as Git from 'simple-git'
@@ -60,6 +61,7 @@ export class GitHubRAWHash {
 					// eslint-disable-next-line no-await-in-loop
 					const Uint8Data = await GetFileFromGitHubRAW(this.ProgramOptions, ChangedFile.Branch, ChangedFile.Filename)
 					if (GetSHA3FromUint8Array(Uint8Data) === this.GitHubRAWHashMap.get(JSON.stringify({Branch: ChangedFile.Branch, Filename: ChangedFile.Filename}))) {
+						Actions.info(`Hash of ${ChangedFile.Filename} in ${ChangedFile.Branch} is OK.`)
 						break
 					}
 
