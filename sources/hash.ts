@@ -64,9 +64,11 @@ export class GitHubRAWHash {
 					// eslint-disable-next-line no-await-in-loop
 					const Uint8Data = await GetFileFromGitHubRAW(this.ProgramOptions, ChangedFile.Branch, ChangedFile.Filename)
 					if (GetSHA3FromUint8Array(Uint8Data) === this.GitHubRAWHashMap.get(JSON.stringify({Branch: ChangedFile.Branch, Filename: ChangedFile.Filename}))) {
-						Actions.info(`[ OK ] Hash of ${ChangedFile.Filename} in ${ChangedFile.Branch} is ${GetSHA3FromUint8Array(Uint8Data)}`)
+						Actions.info(`OK: Hash of ${ChangedFile.Filename} in ${ChangedFile.Branch} is ${GetSHA3FromUint8Array(Uint8Data)}`)
 						break
 					}
+
+					Actions.info(`Retrying: Hash of ${ChangedFile.Filename} in ${ChangedFile.Branch} is ${GetSHA3FromUint8Array(Uint8Data)}`)
 
 					// eslint-disable-next-line no-await-in-loop
 					await new Promise(Resolve => {
