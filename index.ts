@@ -68,7 +68,7 @@ for (const Branch of Branches) {
 
 // Hold until checking hash is done.
 performance.mark('githubrawhash')
-const GitHubRAWHashInstance = new GitHubRAWHash(ProgramOptions, ChangedFiles)
+const GitHubRAWHashInstance = new GitHubRAWHash(ProgramOptions, ChangedFiles, Branches)
 await GitHubRAWHashInstance.Register()
 await GitHubRAWHashInstance.Check()
 Actions.info(`Checking hashes took ${Math.floor(performance.measure('githubrawhash-duration', 'githubrawhash').duration)} ms.`)

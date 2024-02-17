@@ -27,22 +27,22 @@ function CreateGitInstance(BasePath: string): Git.SimpleGit {
 	return GitInstance
 }
 
-async function ReadFileAsUint8Array(ProgramOptions: Types.ProgramOptionsType, BranchOrTag: string, Filename: string): Promise<Uint8Array> {
+async function ReadFileAsUint8Array(ProgramOptions: Types.ProgramOptionsType, BranchOrTag: string, Filename: string, Branches: string[]): Promise<Uint8Array> {
 	const GitInstance = CreateGitInstance(ProgramOptions.ciWorkspacePath)
-	return GitInstance.show([`${BranchOrTag}:${Filename}`]).then(Target => new TextEncoder().encode(Target))
+	return GitInstance.show([`${BranchOrTag === 'latest' ? BranchOrTag : Branches[1]}:${Filename}`]).then(Target => new TextEncoder().encode(Target))
 }
 
 export class GitHubRAWHash {
 	private readonly GitHubRAWHashMap = new Map<string, string>()
 
-	constructor(private readonly ProgramOptions: Types.ProgramOptionsType, private readonly ChangedFiles: Array<{Branch: string; Filename: string}>) {}
+	constructor(private readonly ProgramOptions: Types.ProgramOptionsType, private readonly ChangedFiles: Array<{Branch: string; Filename: string}>, private readonly Branches: string[]) {}
 
 	async Register() {
 		const PromiseList: Array<Promise<void>> = []
 		for (const ChangedFile of this.ChangedFiles) {
 			// eslint-disable-next-line no-async-promise-executor
 			PromiseList.push(new Promise(async Resolve => {
-				const Uint8Data = await ReadFileAsUint8Array(this.ProgramOptions, ChangedFile.Branch, ChangedFile.Filename)
+				const Uint8Data = await ReadFileAsUint8Array(this.ProgramOptions, ChangedFile.Branch, ChangedFile.Filename, this.Branches)
 				const SHA3 = GetSHA3FromUint8Array(Uint8Data)
 				this.GitHubRAWHashMap.set(JSON.stringify({Branch: ChangedFile.Branch, Filename: ChangedFile.Filename}), SHA3)
 				Resolve()
