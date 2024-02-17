@@ -26,12 +26,6 @@ function CreateGitInstance(BasePath: string): Git.SimpleGit {
 	return GitInstance
 }
 
-async function ListFileNamesInRepo(ProgramOptions: Types.ProgramOptionsType, Branch: string): Promise<string[]> {
-	const GitInstance = CreateGitInstance(ProgramOptions.ciWorkspacePath)
-	const FilenamesRaw = await GitInstance.raw(['ls-tree', '-r', '--name-only', Branch]).then(FileNames => FileNames.split('\n'))
-	return FilenamesRaw.filter(Filename => Filename.length > 0)
-}
-
 async function ReadFileAsUint8Array(ProgramOptions: Types.ProgramOptionsType, BranchOrTag: string, Filename: string): Promise<Uint8Array> {
 	const GitInstance = CreateGitInstance(ProgramOptions.ciWorkspacePath)
 	return GitInstance.show([`${BranchOrTag}:${Filename}`]).then(Target => new TextEncoder().encode(Target))
