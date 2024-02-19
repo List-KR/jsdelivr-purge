@@ -32,7 +32,7 @@ export async function ListBranches(ProgramOptions: Types.ProgramOptionsType): Pr
 		Actions.debug(`ListBranches in branches.ts called: ${JSON.stringify(Branches)}`)
 	}
 
-	Branches = {Branches: Branches.Branches.filter(Branch => Branch !== undefined && Branch !== null), Default: Branches.Default}
+	Branches.Branches = Branches.Branches.filter(Branch => Branch !== undefined && Branch !== null)
 
 	return Branches
 }
