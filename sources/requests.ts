@@ -27,6 +27,7 @@ async function PostPurgeRequest(ProgramOptions: Types.ProgramOptionsType, Branch
 	const ResponseRaw: Types.CDNPostResponseType = await got.post('https://purge.jsdelivr.net/', {
 		headers: {
 			'cache-control': 'no-cache',
+			'user-agent': 'jsdelivr-purge',
 		},
 		json: {
 			path: new Array(Filenames.length).fill(null, 0, Filenames.length).map((Filename, Index) => `/gh/${ProgramOptions.repo}@${BranchOrTag[Index]}/${Filenames[Index]}`),
