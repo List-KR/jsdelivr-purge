@@ -7,7 +7,6 @@ import {ListBranches} from './sources/branches.js'
 import {CommitManager} from './sources/commits.js'
 import {PurgeRequestManager} from './sources/requests.js'
 import {GetIPAddress} from './sources/ipcheck.js'
-import {GitHubRAWHash} from './sources/hash.js'
 import * as Actions from '@actions/core'
 import * as Os from 'node:os'
 
@@ -65,13 +64,6 @@ for (const Branch of Branches.Branches) {
 		ChangedFiles.push(...(await CommitManagerInstance.GetChangedFilesFromSHAToHead(CommitSHA.sha, Branch).then(ChangedFiles => ChangedFiles)).map(ChangedFile => ({Branch, Filename: ChangedFile})))
 	}
 }
-
-// Hold until checking hash is done.
-performance.mark('githubrawhash')
-const GitHubRAWHashInstance = new GitHubRAWHash(ProgramOptions, ChangedFiles)
-await GitHubRAWHashInstance.Register()
-await GitHubRAWHashInstance.Check()
-Actions.info(`Checking hashes took ${Math.floor(performance.measure('githubrawhash-duration', 'githubrawhash').duration)} ms.`)
 
 performance.mark('purge')
 const PurgeRequest = new PurgeRequestManager(ProgramOptions)
