@@ -1,5 +1,4 @@
 import * as Git from 'simple-git'
-import * as GitHub from '@octokit/rest'
 import * as Actions from '@actions/core'
 import * as Os from 'node:os'
 import type * as Types from './types.js'

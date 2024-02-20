@@ -1,5 +1,4 @@
 import * as Git from 'simple-git'
-import * as GitHub from '@octokit/rest'
 import * as Os from 'node:os'
 import {DateTime} from 'luxon'
 import type * as Types from './types.js'
