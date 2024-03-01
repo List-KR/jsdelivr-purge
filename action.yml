@@ -6,7 +6,7 @@ inputs:
   branches:
     description: 'The your branches that you want to purge cache existing in jsDelivr'
     required: false
-    default: 'latest'
+    default: ''
 
 runs:
   using: 'composite'

@@ -1,5 +1,4 @@
 import * as Git from 'simple-git'
-import * as GitHub from '@octokit/rest'
 import * as Os from 'node:os'
 import {DateTime} from 'luxon'
 import type * as Types from './types.js'
@@ -10,7 +9,7 @@ function CreateGitInstance(BasePath: string): Git.SimpleGit {
 }
 
 export class CommitManager {
-	constructor(private readonly ProgramOptions: Types.ProgramOptionsType, private readonly Branches: string[]) {}
+	constructor(private readonly ProgramOptions: Types.ProgramOptionsType) {}
 
 	/**
 	 * @name GetCommitSHAFromLatestWorkflowTime
@@ -53,7 +52,7 @@ export class CommitManager {
 	 */
 	async GetChangedFilesFromSHAToHead(CommitSHA: string, Branch: string): Promise<string[]> {
 		const GitInstance = CreateGitInstance(this.ProgramOptions.ciWorkspacePath)
-		const ChangedFiles = (await GitInstance.diff(['--name-only', `${CommitSHA}...${Branch === 'latest' ? this.Branches[1] : Branch}`])).split('\n')
+		const ChangedFiles = (await GitInstance.diff(['--name-only', `${CommitSHA}...${Branch}`])).split('\n')
 		return ChangedFiles[ChangedFiles.length - 1] === '' ? ChangedFiles.slice(0, ChangedFiles.length - 1) : ChangedFiles
 	}
 

@@ -17,6 +17,13 @@ async function GetCDNResponse(ProgramOptions: Types.ProgramOptionsType, ID: stri
 			'user-agent': 'jsdelivr-purge',
 		},
 	}).json()
+
+	for (const [Key, Value] of Object.entries(ResponseRaw.paths)) {
+		if (Value.throttled) {
+			Actions.warning(`Throttled: ${Key.replace(/^\/gh\/[A-Za-z0-9-._]+\/[A-Za-z0-9-._]+(?=@)/, '')}`)
+		}
+	}
+
 	Actions.startGroup(`GetCDNResponse called: ${ID}`)
 	Actions.info(JSON.stringify(ResponseRaw))
 	Actions.endGroup()
@@ -27,6 +34,7 @@ async function PostPurgeRequest(ProgramOptions: Types.ProgramOptionsType, Branch
 	const ResponseRaw: Types.CDNPostResponseType = await got.post('https://purge.jsdelivr.net/', {
 		headers: {
 			'cache-control': 'no-cache',
+			'user-agent': 'jsdelivr-purge',
 		},
 		json: {
 			path: new Array(Filenames.length).fill(null, 0, Filenames.length).map((Filename, Index) => `/gh/${ProgramOptions.repo}@${BranchOrTag[Index]}/${Filenames[Index]}`),

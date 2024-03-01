@@ -7,7 +7,6 @@ import {ListBranches} from './sources/branches.js'
 import {CommitManager} from './sources/commits.js'
 import {PurgeRequestManager} from './sources/requests.js'
 import {GetIPAddress} from './sources/ipcheck.js'
-import {GitHubRAWHash} from './sources/hash.js'
 import * as Actions from '@actions/core'
 import * as Os from 'node:os'
 
@@ -49,8 +48,8 @@ const Branches = await ListBranches(ProgramOptions).then(Branches => Branches)
 
 // Get changed files.
 var ChangedFiles: Array<{Branch: string; Filename: string}> = []
-for (const Branch of Branches) {
-	const CommitManagerInstance = new CommitManager(ProgramOptions, Branches)
+for (const Branch of Branches.Branches) {
+	const CommitManagerInstance = new CommitManager(ProgramOptions)
 	// eslint-disable-next-line no-await-in-loop
 	const CommitSHA = await CommitManagerInstance.GetCommitSHAFromLatestWorkflowTime(LatestWorkflowRunTime, Branch).then(CommitSHA => CommitSHA)
 	if (CommitSHA.length === 0) {
@@ -66,17 +65,10 @@ for (const Branch of Branches) {
 	}
 }
 
-// Hold until checking hash is done.
-performance.mark('githubrawhash')
-const GitHubRAWHashInstance = new GitHubRAWHash(ProgramOptions, ChangedFiles, Branches)
-await GitHubRAWHashInstance.Register()
-await GitHubRAWHashInstance.Check()
-Actions.info(`Checking hashes took ${Math.floor(performance.measure('githubrawhash-duration', 'githubrawhash').duration)} ms.`)
-
 performance.mark('purge')
 const PurgeRequest = new PurgeRequestManager(ProgramOptions)
-PurgeRequest.AddURLs(ChangedFiles.filter(ChangedFile => ChangedFile.Branch === 'latest').map(ChangedFile => ChangedFile.Filename), 'latest')
-for (const Branch of Branches.filter(Branch => Branch !== 'latest')) {
+PurgeRequest.AddURLs(ChangedFiles.filter(ChangedFile => ChangedFile.Branch === Branches.Default).map(ChangedFile => ChangedFile.Filename), 'latest')
+for (const Branch of Branches.Branches) {
 	PurgeRequest.AddURLs(ChangedFiles.filter(ChangedFile => ChangedFile.Branch === Branch).map(ChangedFile => ChangedFile.Filename), Branch)
 }
 
