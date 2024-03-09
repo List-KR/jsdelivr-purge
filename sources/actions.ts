@@ -18,6 +18,7 @@ export async function GetLatestWorkflowTime(ProgramOptions: ProgramOptionsType):
 	}).then(WorkflowRuns => WorkflowRuns.data.workflow_runs)
 	for (const WorkflowRun of WorkflowRuns) {
 		if (WorkflowRun.status === 'completed' && WorkflowRun.conclusion === 'success'
+		&& (WorkflowRun.event === 'push' || WorkflowRun.event === 'release')
 		&& DateTime.fromISO(WorkflowRun.updated_at).toMillis() > LatestWorkflowRunTime) {
 			LatestWorkflowRunTime = DateTime.fromISO(WorkflowRun.updated_at).toMillis()
 		}
