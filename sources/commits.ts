@@ -18,7 +18,7 @@ export class CommitManager {
 	 * @param {string} Branch The branch or tag name.
 	 * @returns {Promise<Types.CommitSHA>} SHA of the latest commit.
 	 */
-	async GetCommitSHAFromLatestWorkflowTime(LatestWorkflowRunTime: number, Branch: string): Promise<Types.CommitSHA> {
+	async GetCommitSHAFromLatestWorkflowTime(LatestWorkflowRunTime: number): Promise<Types.CommitSHA> {
 		var MatchedCommitTimeAddress = 0
 		const GitInstance = CreateGitInstance(this.ProgramOptions.ciWorkspacePath)
 		const GitLog = (await GitInstance.log(['--date=iso-strict'])).all
