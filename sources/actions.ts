@@ -8,7 +8,7 @@ async function ListWorkflowRuns(ProgramOptions: ProgramOptionsType, EventType: s
 	const WorkflowRuns = await GitHubInstance.actions.listWorkflowRuns({
 		event: EventType,
 		owner: RepoOwner, repo: RepoName,
-		workflow_id: /(?<=^[A-Za-z0-9-_.]+\/[A-Za-z0-9-_.]+\/\.github\/workflows\/).+\.yml(?=@refs\/)/.exec(ProgramOptions.workflowRef)[0],
+		workflow_id: /(?<=^[A-Za-z0-9-_.]+\/[A-Za-z0-9-_.]+\/\.github\/workflows\/).+\.yml(?=@refs\/)/.exec(ProgramOptions.workflowRef)[0]
 	}).then(WorkflowRuns => WorkflowRuns.data.workflow_runs)
 	return WorkflowRuns
 }

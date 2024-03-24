@@ -10,12 +10,12 @@ async function GetCDNResponse(ProgramOptions: Types.ProgramOptionsType, ID: stri
 	const ResponseRaw: Types.CDNStatusResponseType = await got(`https://purge.jsdelivr.net/status/${ID}`, {
 		https: {
 			minVersion: 'TLSv1.3',
-			ciphers: 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256',
+			ciphers: 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256'
 		},
 		http2: true,
 		headers: {
-			'user-agent': 'jsdelivr-purge',
-		},
+			'user-agent': 'jsdelivr-purge'
+		}
 	}).json()
 
 	for (const [Key, Value] of Object.entries(ResponseRaw.paths)) {
@@ -34,16 +34,16 @@ async function PostPurgeRequest(ProgramOptions: Types.ProgramOptionsType, Branch
 	const ResponseRaw: Types.CDNPostResponseType = await got.post('https://purge.jsdelivr.net/', {
 		headers: {
 			'cache-control': 'no-cache',
-			'user-agent': 'jsdelivr-purge',
+			'user-agent': 'jsdelivr-purge'
 		},
 		json: {
-			path: new Array(Filenames.length).fill(null, 0, Filenames.length).map((Filename, Index) => `/gh/${ProgramOptions.repo}@${BranchOrTag[Index]}/${Filenames[Index]}`),
+			path: new Array(Filenames.length).fill(null, 0, Filenames.length).map((Filename, Index) => `/gh/${ProgramOptions.repo}@${BranchOrTag[Index]}/${Filenames[Index]}`)
 		} satisfies Types.CDNPostRequestType,
 		https: {
 			minVersion: 'TLSv1.3',
-			ciphers: 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256',
+			ciphers: 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256'
 		},
-		http2: true,
+		http2: true
 	}).json()
 	Actions.startGroup(`PostPurgeRequest called: ${ResponseRaw.id}`)
 	Actions.info(JSON.stringify(ResponseRaw))

@@ -18,7 +18,7 @@ function CreateGitInstance(BasePath: string): Git.SimpleGit {
 export async function ListBranches(ProgramOptions: Types.ProgramOptionsType): Promise<{Branches: string[]; Default: string}> {
 	var Branches: {Branches: string[]; Default: string} = {
 		Branches: [],
-		Default: '',
+		Default: ''
 	}
 	const GitInstance = CreateGitInstance(ProgramOptions.ciWorkspacePath)
 	Branches.Default = await GitInstance.branchLocal().then(Branches => Branches.current)
