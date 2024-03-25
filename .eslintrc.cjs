@@ -1,39 +1,27 @@
 module.exports = {
-	env: {
-		es2022: true
-	},
 	extends: [
-		'xo'
+		'eslint:recommended',
+		'plugin:@typescript-eslint/recommended',
 	],
-	overrides: [
-		{
-			extends: [
-				'xo-typescript',
-			],
-			files: [
-				'sources/**/*.ts',
-				'index.ts'
-			],
-			rules:
-			{
-				'@typescript-eslint/naming-convention': ['error', {
-					selector: ['variableLike', 'parameterProperty', 'classProperty', 'typeProperty'],
-					format: ['PascalCase']
-				}],
-				'@typescript-eslint/semi': ['error', 'never'],
-				'@typescript-eslint/prefer-nullish-coalescing': 'off',
-				'new-cap': 'off'
-			}
-		}
-	],
+	parser: '@typescript-eslint/parser',
 	parserOptions: {
-		ecmaVersion: 'latest',
-		sourceType: 'module'
+		tsconfigRootDir: __dirname,
+		project: './tsconfig.json'
 	},
+	plugins: ['@typescript-eslint', '@stylistic'],
 	rules: {
+		'@typescript-eslint/naming-convention': ['error', {
+			selector: ['variableLike', 'parameterProperty', 'classProperty', 'typeProperty'],
+			format: ['PascalCase']
+		}],
+		'@typescript-eslint/prefer-nullish-coalescing': 'off',
+		'new-cap': 'off',
     'no-var': 'off',
-		'comma-dangle': 'off',
-		indent: ['off', 'tab'],
-		semi: 'off'
-	}
+		'@stylistic/indent': ['off', 'tab'],
+		'@stylistic/semi': ['error', 'never'],
+		'@stylistic/comma-dangle': ['error', 'never'],
+		'@stylistic/comma-spacing': ['error', { before: false, after: true }],
+		'@stylistic/quotes': ['error', 'single'],
+	},
+	ignorePatterns: ['dist', 'node_modules', '.eslintrc.cjs']
 }

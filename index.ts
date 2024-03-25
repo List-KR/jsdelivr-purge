@@ -51,7 +51,7 @@ var ChangedFiles: Array<{Branch: string; Filename: string}> = []
 for (const Branch of Branches.Branches) {
 	const CommitManagerInstance = new CommitManager(ProgramOptions)
 	// eslint-disable-next-line no-await-in-loop
-	const CommitSHA = await CommitManagerInstance.GetCommitSHAFromLatestWorkflowTime(LatestWorkflowRunTime, Branch).then(CommitSHA => CommitSHA)
+	const CommitSHA = await CommitManagerInstance.GetCommitSHAFromLatestWorkflowTime(LatestWorkflowRunTime).then(CommitSHA => CommitSHA)
 	if (CommitSHA.length === 0) {
 		continue
 	}
