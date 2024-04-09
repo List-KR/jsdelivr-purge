@@ -29,6 +29,7 @@
     "got": "^14.2.1",
     "ip-regex": "^5.0.0",
     "luxon": "^3.4.4",
+    "multithread-array": "^2.0.0",
     "p-queue": "^8.0.1",
     "simple-git": "^3.24.0",
     "tsx": "^4.7.2",
