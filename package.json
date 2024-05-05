@@ -22,9 +22,9 @@
   },
   "dependencies": {
     "@actions/core": "^1.10.1",
-    "@octokit/rest": "^20.1.0",
+    "@octokit/rest": "^20.1.1",
     "@types/luxon": "^3.4.2",
-    "@types/node": "^20.12.5",
+    "@types/node": "^20.12.8",
     "commander": "^12.0.0",
     "got": "^14.2.1",
     "ip-regex": "^5.0.0",
@@ -32,14 +32,14 @@
     "multithread-array": "^2.0.0",
     "p-queue": "^8.0.1",
     "simple-git": "^3.24.0",
-    "tsx": "^4.7.2",
-    "typescript": "^5.4.4"
+    "tsx": "^4.9.1",
+    "typescript": "^5.4.5"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin": "^1.7.0",
+    "@stylistic/eslint-plugin": "^1.8.0",
     "@typescript-eslint/eslint-plugin": "^7.1.1",
     "@typescript-eslint/parser": "^7.1.1",
     "eslint": "^8.57.0",
-    "typescript-eslint": "^7.5.0"
+    "typescript-eslint": "^7.8.0"
   }
 }
