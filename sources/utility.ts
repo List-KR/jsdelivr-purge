@@ -1,4 +1,4 @@
-import {SplitElementsIntoSubArrayLength} from 'multithread-array'
+import {chunk} from 'es-toolkit'
 import type * as Types from './types.js'
 
 /**
@@ -48,12 +48,12 @@ export function IncludePropertiesInObject(CustomObjectArray: unknown[], CompareO
  */
 export function GroupRequestsByNumberWithBranch(RemainingObjectArray: Types.RemainingFilenamesArrayType[], Count: number): Types.RemainingFilenamesArrayType[][] {
 	if (RemainingObjectArray.every(RemainingObject => RemainingObject.BranchOrTag === RemainingObjectArray[0].BranchOrTag)) {
-		return SplitElementsIntoSubArrayLength(RemainingObjectArray, {Count}) as Types.RemainingFilenamesArrayType[][]
+		return chunk(RemainingObjectArray, Count) as Types.RemainingFilenamesArrayType[][]
 	}
 
 	const SplittedArray: Types.RemainingFilenamesArrayType[][] = []
-	SplittedArray.push(...SplitElementsIntoSubArrayLength(RemainingObjectArray.filter(RemainingObject => RemainingObject.BranchOrTag === 'latest'), {Count}) as Types.RemainingFilenamesArrayType[][])
-	SplittedArray.push(...SplitElementsIntoSubArrayLength(RemainingObjectArray.filter(RemainingObject => RemainingObject.BranchOrTag !== 'latest'), {Count}) as Types.RemainingFilenamesArrayType[][])
+	SplittedArray.push(...chunk(RemainingObjectArray.filter(RemainingObject => RemainingObject.BranchOrTag === 'latest'), Count) as Types.RemainingFilenamesArrayType[][])
+	SplittedArray.push(...chunk(RemainingObjectArray.filter(RemainingObject => RemainingObject.BranchOrTag !== 'latest'), Count) as Types.RemainingFilenamesArrayType[][])
 
 	return SplittedArray
 }
