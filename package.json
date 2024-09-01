@@ -18,7 +18,7 @@
   "type": "module",
   "scripts": {
     "ci": "tsx index.ts",
-    "lint": "tsc && eslint . --ext .ts"
+    "lint": "tsc --noEmit && eslint ."
   },
   "dependencies": {
     "@actions/core": "^1.10.1",
