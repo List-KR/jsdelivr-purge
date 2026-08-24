@@ -1,42 +1,41 @@
-import * as GitHub from '@octokit/rest'
-import {DateTime} from 'luxon'
-import type {ProgramOptionsType} from './types.js'
+import {Octokit} from '@octokit/rest'
+import type {programOptions} from './types.js'
 
-async function ListWorkflowRuns(ProgramOptions: ProgramOptionsType, EventType: string) {
-	const GitHubInstance = new GitHub.Octokit({auth: ProgramOptions.ghToken})
-	const [RepoOwner, RepoName] = ProgramOptions.repo.split('/')
-	const WorkflowRuns = await GitHubInstance.actions.listWorkflowRuns({
-		event: EventType,
-		owner: RepoOwner, repo: RepoName,
-		workflow_id: /(?<=^[A-Za-z0-9-_.]+\/[A-Za-z0-9-_.]+\/\.github\/workflows\/).+\.yml(?=@refs\/)/.exec(ProgramOptions.workflowRef)[0]
-	}).then(WorkflowRuns => WorkflowRuns.data.workflow_runs)
-	return WorkflowRuns
+export function getWorkflowId(workflowRef: string): string {
+	const workflowId = /^[^/]+\/[^/]+\/\.github\/workflows\/([^/@]+\.ya?ml)@.+$/.exec(workflowRef)?.[1]
+	if (!workflowId) {
+		throw new Error(`Invalid GitHub workflow ref: ${workflowRef}`)
+	}
+
+	return workflowId
 }
 
-/**
- * @name GetLatestWorkflowTime
- * @description Get the latest workflow time.
- * @param {ProgramOptionsType} ProgramOptions The program options.
- * @returns {Promise<number>} The latest workflow time in milliseconds.
- */
-export async function GetLatestWorkflowTime(ProgramOptions: ProgramOptionsType): Promise<number> {
-	var LatestWorkflowRunTime = 0
-	let WorkflowRuns: ReturnType<typeof ListWorkflowRuns> = null
-	for (const EventType of ['push', 'release']) {
-		if (WorkflowRuns === null) {
-			WorkflowRuns = ListWorkflowRuns(ProgramOptions, EventType)
-		} else {
-			// eslint-disable-next-line no-await-in-loop
-			(await WorkflowRuns).push(...await ListWorkflowRuns(ProgramOptions, EventType))
-		}
+async function listWorkflowRuns(options: programOptions, eventType: string) {
+	const octokit = new Octokit({auth: options.ghToken})
+	const [repoOwner, repoName, extra] = options.repo.split('/')
+	if (!repoOwner || !repoName || extra) {
+		throw new Error(`Invalid GitHub repository: ${options.repo}`)
 	}
 
-	for (const WorkflowRun of await WorkflowRuns) {
-		if (WorkflowRun.status === 'completed' && WorkflowRun.conclusion === 'success'
-		&& DateTime.fromISO(WorkflowRun.updated_at).toMillis() > LatestWorkflowRunTime) {
-			LatestWorkflowRunTime = DateTime.fromISO(WorkflowRun.updated_at).toMillis()
-		}
-	}
+	return octokit.actions.listWorkflowRuns({
+		event: eventType,
+		owner: repoOwner,
+		repo: repoName,
+		workflow_id: getWorkflowId(options.workflowRef),
+		per_page: 100,
+	}).then(({data}) => data.workflow_runs)
+}
 
-	return LatestWorkflowRunTime
+export async function getLatestWorkflowTime(options: programOptions): Promise<number> {
+	const events = ['push', 'release', 'workflow_dispatch', 'schedule']
+	const workflowRuns = (await Promise.all(events.map(eventType => listWorkflowRuns(options, eventType)))).flat()
+
+	return workflowRuns.reduce((latestTime, workflowRun) => {
+		if (workflowRun.status !== 'completed' || workflowRun.conclusion !== 'success') {
+			return latestTime
+		}
+
+		const updatedTime = Date.parse(workflowRun.updated_at)
+		return Number.isNaN(updatedTime) ? latestTime : Math.max(latestTime, updatedTime)
+	}, 0)
 }

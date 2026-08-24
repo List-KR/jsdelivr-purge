@@ -2,10 +2,13 @@
   "compilerOptions": {
     "outDir": "dist",
     "module": "NodeNext",
-    "target": "ES2022",
+    "target": "ES2024",
     "moduleResolution": "NodeNext",
     "removeComments": true,
-    "alwaysStrict": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"],
     "skipLibCheck": true
   },
   "include": [

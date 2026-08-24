@@ -1,76 +1,55 @@
-import * as Commander from 'commander'
-import type * as Types from './sources/types.js'
-import {ExportArgs, IsDebug} from './sources/debug.js'
-import {ReplaceStringWithBooleanInObject} from './sources/utility.js'
-import {GetLatestWorkflowTime} from './sources/actions.js'
-import {ListBranches} from './sources/branches.js'
-import {CommitManager} from './sources/commits.js'
+import * as actions from '@actions/core'
+import {availableParallelism, cpus} from 'node:os'
+import {parseArgs} from 'node:util'
+import {getLatestWorkflowTime} from './sources/actions.js'
+import {listBranches} from './sources/branches.js'
+import {getChangedFiles} from './sources/commits.js'
+import {exportArgs, isDebug} from './sources/debug.js'
+import {getIpAddress} from './sources/ipcheck.js'
 import {PurgeRequestManager} from './sources/requests.js'
-import {GetIPAddress} from './sources/ipcheck.js'
-import * as Actions from '@actions/core'
-import * as Os from 'node:os'
+import type {programOptions} from './sources/types.js'
 
-Actions.info(`Running on ${Os.cpus()[0].model} with ${Os.cpus().length} threads/vCPUs.`)
+const cpuModel = cpus()[0]?.model ?? 'unknown CPU'
+actions.info(`Running on ${cpuModel} with ${availableParallelism()} threads/vCPUs.`)
 
-const Program = new Commander.Command()
-
-// Set options.
-Program.option('--debug', 'output extra debugging', false)
-	.option('--gh-token <TOKEN>', 'GitHub token', '')
-	.option('--repo <REPO>', 'A GitHub repository. eg: owner/repo', '')
-	.option('--workflow-ref <WORKFLOW_REF>', 'A GitHub workflow ref. eg: refs/heads/master', '')
-	.option('--branch <BRANCH>', 'A GitHub branch. eg: master', '')
-	.option('--ci-workspace-path <PATH>', 'A path to the CI workspace.', '')
-	.option('--ci-action-path <PATH>', 'A path to the CI action.', '')
-
-// Initialize Input of the options and export them.
-Program.parse()
-
-// Declare the options and print them if the debugging mode is enabled.
-const ProgramRawOptions: Types.ProgramOptionsRawType = Program.opts()
-if (IsDebug(ProgramRawOptions)) {
-	ExportArgs(ProgramRawOptions)
+const {values} = parseArgs({options: {
+	debug: {type: 'boolean', default: false},
+	'gh-token': {type: 'string'},
+	repo: {type: 'string'},
+	'workflow-ref': {type: 'string'},
+	branch: {type: 'string', default: ''},
+	'ci-workspace-path': {type: 'string'},
+}})
+const ghToken = values['gh-token']
+const workflowRef = values['workflow-ref']
+const ciWorkspacePath = values['ci-workspace-path']
+if (!ghToken || !values.repo || !workflowRef || !ciWorkspacePath) {
+	throw new Error('Missing required --gh-token, --repo, --workflow-ref, or --ci-workspace-path option')
 }
 
-// Redefine with boolean.
-const ProgramOptions = ReplaceStringWithBooleanInObject(ProgramRawOptions) as Types.ProgramOptionsType
-
-// Print the runner's IP address.
-Actions.info(`The runner's IP address: ${await GetIPAddress().then(IPAddress => IPAddress)}`)
-
-// Get the latest workflow run time.
-performance.mark('latestworkflowtime')
-const LatestWorkflowRunTime = await GetLatestWorkflowTime(ProgramOptions).then(LatestWorkflowRunTime => LatestWorkflowRunTime)
-Actions.info(`Getting the latest workflow run took ${Math.floor(performance.measure('latestworkflowtime-duration', 'latestworkflowtime').duration)} ms.`)
-
-// List branches.
-const Branches = await ListBranches(ProgramOptions).then(Branches => Branches)
-
-// Get changed files.
-var ChangedFiles: Array<{Branch: string; Filename: string}> = []
-for (const Branch of Branches.Branches) {
-	const CommitManagerInstance = new CommitManager(ProgramOptions)
-	// eslint-disable-next-line no-await-in-loop
-	const CommitSHA = await CommitManagerInstance.GetCommitSHAFromLatestWorkflowTime(LatestWorkflowRunTime).then(CommitSHA => CommitSHA)
-	if (CommitSHA.length === 0) {
-		continue
-	}
-
-	if (CommitSHA.length === 1) {
-		// eslint-disable-next-line no-await-in-loop
-		ChangedFiles.push(...(await CommitManagerInstance.GetChangedFilesFromACommit(CommitSHA.sha).then(ChangedFiles => ChangedFiles)).map(ChangedFile => ({Branch, Filename: ChangedFile})))
-	} else {
-		// eslint-disable-next-line no-await-in-loop
-		ChangedFiles.push(...(await CommitManagerInstance.GetChangedFilesFromSHAToHead(CommitSHA.sha, Branch).then(ChangedFiles => ChangedFiles)).map(ChangedFile => ({Branch, Filename: ChangedFile})))
-	}
+const options: programOptions = {debug: values.debug, ghToken, repo: values.repo, workflowRef, branch: values.branch, ciWorkspacePath}
+if (isDebug(options)) {
+	exportArgs(options)
 }
+
+actions.info(`The runner's IP address: ${await getIpAddress()}`)
+
+performance.mark('latest-workflow-time')
+const latestWorkflowTime = await getLatestWorkflowTime(options)
+actions.info(`Getting the latest workflow run took ${Math.floor(performance.measure('latest-workflow-time-duration', 'latest-workflow-time').duration)} ms.`)
+
+const branchSelection = await listBranches(options)
+const changesByBranch = await Promise.all(branchSelection.branches.map(async branch => ({
+	branch,
+	filenames: await getChangedFiles(options, latestWorkflowTime, branch),
+})))
 
 performance.mark('purge')
-const PurgeRequest = new PurgeRequestManager(ProgramOptions)
-PurgeRequest.AddURLs(ChangedFiles.filter(ChangedFile => ChangedFile.Branch === Branches.Default).map(ChangedFile => ChangedFile.Filename), 'latest')
-for (const Branch of Branches.Branches) {
-	PurgeRequest.AddURLs(ChangedFiles.filter(ChangedFile => ChangedFile.Branch === Branch).map(ChangedFile => ChangedFile.Filename), Branch)
+const purgeRequest = new PurgeRequestManager(options)
+purgeRequest.addUrls(changesByBranch.find(({branch}) => branch === branchSelection.defaultBranch)?.filenames ?? [], 'latest')
+for (const {branch, filenames} of changesByBranch) {
+	purgeRequest.addUrls(filenames, branch)
 }
 
-PurgeRequest.Start()
-PurgeRequest.OnEnded()
+purgeRequest.start()
+await purgeRequest.onEnded()

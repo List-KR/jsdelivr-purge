@@ -1,11 +1,10 @@
-import * as Actions from '@actions/core'
-import type * as Types from './types.js'
+import * as actions from '@actions/core'
+import type {programOptions} from './types.js'
 
-export function IsDebug(Args: Types.ProgramOptionsType | Types.ProgramOptionsRawType) {
-	const ArgsDebug = typeof Args.debug === 'string' ? Args.debug === 'true' : Args.debug
-	return Actions.isDebug() || ArgsDebug
+export function isDebug(options: programOptions): boolean {
+	return actions.isDebug() || options.debug
 }
 
-export function ExportArgs(Args: Types.ProgramOptionsType | Types.ProgramOptionsRawType) {
-	Actions.debug(`ProgramOptions: ${JSON.stringify(Args).replace(/(?<=,"ghToken":")[^"]+/, '***')}`)
+export function exportArgs(options: programOptions): void {
+	actions.debug(`programOptions: ${JSON.stringify({...options, ghToken: '***'})}`)
 }

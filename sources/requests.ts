@@ -1,123 +1,112 @@
+import * as actions from '@actions/core'
 import got from 'got'
-import * as Actions from '@actions/core'
-import * as Os from 'node:os'
+import {availableParallelism} from 'node:os'
+import {setTimeout as delay} from 'node:timers/promises'
 import PQueue from 'p-queue'
-import {IsDebug} from './debug.js'
-import * as Utility from './utility.js'
-import type * as Types from './types.js'
+import {isDebug} from './debug.js'
+import type {cdnPostRequest, cdnPostResponse, cdnStatusResponse, programOptions, remainingFilename} from './types.js'
+import {groupRequestsByNumberWithBranch} from './utility.js'
 
-async function GetCDNResponse(ProgramOptions: Types.ProgramOptionsType, ID: string): Promise<Types.CDNStatusResponseType> {
-	const ResponseRaw: Types.CDNStatusResponseType = await got(`https://purge.jsdelivr.net/status/${ID}`, {
+const requestLimit = 20
+
+async function getCdnResponse(id: string): Promise<cdnStatusResponse> {
+	const response = await got(`https://purge.jsdelivr.net/status/${id}`, {
 		https: {
 			minVersion: 'TLSv1.3',
-			ciphers: 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256'
+			ciphers: 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256',
 		},
 		http2: true,
 		headers: {
-			'user-agent': 'jsdelivr-purge'
-		}
-	}).json()
+			'user-agent': 'jsdelivr-purge',
+		},
+	}).json<cdnStatusResponse>()
 
-	for (const [Key, Value] of Object.entries(ResponseRaw.paths)) {
-		if (Value.throttled) {
-			Actions.warning(`Throttled: ${Key.replace(/^\/gh\/[A-Za-z0-9-._]+\/[A-Za-z0-9-._]+(?=@)/, '')}`)
+	for (const [path, status] of Object.entries(response.paths)) {
+		if (status.throttled) {
+			actions.warning(`Throttled: ${path.replace(/^\/gh\/[A-Za-z0-9-._]+\/[A-Za-z0-9-._]+(?=@)/, '')}`)
 		}
 	}
 
-	Actions.startGroup(`GetCDNResponse called: ${ID}`)
-	Actions.info(JSON.stringify(ResponseRaw))
-	Actions.endGroup()
-	return ResponseRaw
+	actions.startGroup(`getCdnResponse called: ${id}`)
+	actions.info(JSON.stringify(response))
+	actions.endGroup()
+	return response
 }
 
-async function PostPurgeRequest(ProgramOptions: Types.ProgramOptionsType, BranchOrTag: string[], Filenames: string[]): Promise<Types.CDNPostResponseType> {
-	const ResponseRaw: Types.CDNPostResponseType = await got.post('https://purge.jsdelivr.net/', {
+async function postPurgeRequest(options: programOptions, files: remainingFilename[]): Promise<cdnPostResponse> {
+	const response = await got.post('https://purge.jsdelivr.net/', {
 		headers: {
 			'cache-control': 'no-cache',
-			'user-agent': 'jsdelivr-purge'
+			'user-agent': 'jsdelivr-purge',
 		},
 		json: {
-			path: new Array(Filenames.length).fill(null, 0, Filenames.length).map((Filename, Index) => `/gh/${ProgramOptions.repo}@${BranchOrTag[Index]}/${Filenames[Index]}`)
-		} satisfies Types.CDNPostRequestType,
+			path: files.map(({branchOrTag, filename}) => `/gh/${options.repo}@${branchOrTag}/${filename}`),
+		} satisfies cdnPostRequest,
 		https: {
 			minVersion: 'TLSv1.3',
-			ciphers: 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256'
+			ciphers: 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256',
 		},
-		http2: true
-	}).json()
-	Actions.startGroup(`PostPurgeRequest called: ${ResponseRaw.id}`)
-	Actions.info(JSON.stringify(ResponseRaw))
-	Actions.endGroup()
-	return ResponseRaw
+		http2: true,
+	}).json<cdnPostResponse>()
+
+	actions.startGroup(`postPurgeRequest called: ${response.id}`)
+	actions.info(JSON.stringify(response))
+	actions.endGroup()
+	return response
+}
+
+async function purgeFiles(options: programOptions, files: remainingFilename[]): Promise<void> {
+	let response: cdnPostResponse | cdnStatusResponse = await postPurgeRequest(options, files)
+	while (response.status === 'pending') {
+		await delay(2500)
+		response = await getCdnResponse(response.id)
+	}
+
+	if (response.status === 'failed') {
+		throw new Error(`jsDelivr purge failed: ${response.id}`)
+	}
+
+	actions.info(`Queue: jsDelivr server reports that the following files are purged:\n${files.map(({branchOrTag, filename}) => `- @${branchOrTag}/${filename}`).join('\n')}`)
 }
 
 export class PurgeRequestManager {
-	private readonly SharedPQueue = new PQueue({autoStart: true, concurrency: Os.cpus().length})
-	private readonly RemainingFilenames: Types.RemainingFilenamesArrayType[] = []
+	private readonly queue = new PQueue({concurrency: availableParallelism()})
+	private readonly remainingFilenames: remainingFilename[] = []
+	private readonly tasks: Array<Promise<unknown>> = []
 
-	constructor(private readonly ProgramOptions: Types.ProgramOptionsType) {}
+	constructor(private readonly options: programOptions) {}
 
-	AddURLs(Filenames: string[], BranchOrTag: string) {
-		const SplittedFilenames = Utility.GroupRequestsByNumberWithBranch(Filenames.map(Filename => ({Filename, BranchOrTag})), 20)
+	private enqueue(files: remainingFilename[]): void {
+		this.tasks.push(this.queue.add(() => purgeFiles(this.options, files)))
+	}
 
-		if (IsDebug(this.ProgramOptions)) {
-			Actions.debug(`SplittedFilenames variable in requests.ts: ${JSON.stringify(SplittedFilenames)}`)
-			Actions.debug(`Filenames variable in requests.ts: ${JSON.stringify(Filenames)}`)
-			Actions.debug(`BranchOrTag variable in requests.ts: ${BranchOrTag}`)
+	addUrls(filenames: string[], branchOrTag: string): void {
+		const groups = groupRequestsByNumberWithBranch(filenames.map(filename => ({filename, branchOrTag})), requestLimit)
+		const lastGroup = groups.at(-1)
+
+		if (lastGroup && lastGroup.length < requestLimit) {
+			this.remainingFilenames.push(...(groups.pop() ?? []))
 		}
 
-		if (SplittedFilenames[SplittedFilenames.length - 1].length < 20) {
-			this.RemainingFilenames.push(...SplittedFilenames.pop())
+		for (const group of groups) {
+			this.enqueue(group)
 		}
 
-		for (const SplittedFilenameGroup of SplittedFilenames) {
-			void this.SharedPQueue.add(async () => {
-				const CDNRequestArary: Types.CDNPostResponseType[] = []
-				while (CDNRequestArary.length === 0 || !CDNRequestArary.some(async CDNResponse => (await GetCDNResponse(this.ProgramOptions, CDNResponse.id)).status === 'finished'
-					|| (await GetCDNResponse(this.ProgramOptions, CDNResponse.id)).status === 'failed')) {
-					// eslint-disable-next-line no-await-in-loop
-					const CDNRequest: Types.CDNPostResponseType = await PostPurgeRequest(this.ProgramOptions, new Array(20).fill(BranchOrTag, 0, 20) as string[], SplittedFilenameGroup.map(SplittedFilename => SplittedFilename.Filename))
-					CDNRequestArary.push(CDNRequest)
-					// eslint-disable-next-line no-await-in-loop
-					await new Promise(Resolve => {
-						setTimeout(Resolve, 2500)
-					})
-				}
-
-				Actions.info(`Queue: jsDelivr server returns that the following files are purged:
-				${SplittedFilenameGroup.map(Filename => `@${Filename.BranchOrTag}/${Filename.Filename}`).map(Item => `- ${Item}`).join('\n')}
-				`)
-			})
+		if (isDebug(this.options)) {
+			actions.debug(`groups variable in requests.ts: ${JSON.stringify(groups)}`)
+			actions.debug(`filenames variable in requests.ts: ${JSON.stringify(filenames)}`)
+			actions.debug(`branchOrTag variable in requests.ts: ${branchOrTag}`)
 		}
 	}
 
-	Start(): void {
-		const RemainingFilenamesGroup = Utility.GroupRequestsByNumberWithBranch(this.RemainingFilenames, 20)
-		for (const RemainingFilenames of RemainingFilenamesGroup) {
-			void this.SharedPQueue.add(async () => {
-				const CDNRequestArary: Types.CDNPostResponseType[] = []
-				while (CDNRequestArary.length === 0 || !CDNRequestArary.some(async CDNResponse => (await GetCDNResponse(this.ProgramOptions, CDNResponse.id)).status === 'finished'
-					|| (await GetCDNResponse(this.ProgramOptions, CDNResponse.id)).status === 'failed')) {
-					// eslint-disable-next-line no-await-in-loop
-					const CDNRequest: Types.CDNPostResponseType = await PostPurgeRequest(this.ProgramOptions, RemainingFilenames.map(RemainingFilename => RemainingFilename.BranchOrTag), RemainingFilenames.map(RemainingFilename => RemainingFilename.Filename))
-					CDNRequestArary.push(CDNRequest)
-					// eslint-disable-next-line no-await-in-loop
-					await new Promise(Resolve => {
-						setTimeout(Resolve, 2500)
-					})
-				}
-
-				Actions.info('Queue: jsDelivr server returns that the following files are purged:')
-				Actions.info(`${RemainingFilenames.map(Filename => `@${Filename.BranchOrTag}/${Filename.Filename}`).map(Item => `- ${Item}`).join('\n')}`)
-			})
+	start(): void {
+		for (const group of groupRequestsByNumberWithBranch(this.remainingFilenames, requestLimit)) {
+			this.enqueue(group)
 		}
-
-		this.SharedPQueue.start()
 	}
 
-	OnEnded(): void {
-		this.SharedPQueue.on('idle', () => {
-			Actions.info(`Purging took ${Math.floor(performance.measure('purge-duration', 'purge').duration)} ms.`)
-		})
+	async onEnded(): Promise<void> {
+		await Promise.all(this.tasks)
+		actions.info(`Purging took ${Math.floor(performance.measure('purge-duration', 'purge').duration)} ms.`)
 	}
 }
