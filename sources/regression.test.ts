@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {getWorkflowId} from './actions.js'
+import {getPurgePath, getUrlMode} from './requests.js'
 import {groupRequestsByNumberWithBranch} from './utility.js'
 
 test('getWorkflowId accepts yml and yaml workflow refs', () => {
@@ -21,4 +22,16 @@ test('groupRequestsByNumberWithBranch handles empty and mixed requests', () => {
 		[requests[0], requests[2]],
 		[requests[1]],
 	])
+})
+
+test('getPurgePath accepts jsDelivr URLs and paths', () => {
+	assert.equal(getPurgePath('https://cdn.jsdelivr.net/gh/List-KR/List-KR@latest/filter.txt?x=1'), '/gh/List-KR/List-KR@latest/filter.txt')
+	assert.equal(getPurgePath('/npm/package@latest/file.js'), '/npm/package@latest/file.js')
+	assert.throws(() => getPurgePath('https://example.com/file.js'))
+})
+
+test('getUrlMode accepts additional and overwrite only', () => {
+	assert.equal(getUrlMode('additional'), 'additional')
+	assert.equal(getUrlMode('overwrite'), 'overwrite')
+	assert.throws(() => getUrlMode('invalid'))
 })

@@ -7,6 +7,14 @@ inputs:
     description: 'Additional branches whose jsDelivr cache should be purged'
     required: false
     default: ''
+  urls:
+    description: 'Whitespace-separated jsDelivr URLs or paths that should always be purged'
+    required: false
+    default: ''
+  url-mode:
+    description: 'Whether URLs are additional to changed files or overwrite them (additional or overwrite)'
+    required: false
+    default: 'additional'
 
 runs:
   using: 'composite'
@@ -20,8 +28,10 @@ runs:
         GITHUB_TOKEN: ${{ github.token }}
         REPO: ${{ github.repository }}
         BRANCHES: ${{ inputs.branches }}
+        URLS: ${{ inputs.urls }}
+        URL_MODE: ${{ inputs.url-mode }}
         WORKFLOWREF: ${{ github.workflow_ref }}
         CI_WORKSPACE_PATH: ${{ github.workspace }}
-      run: npm run ci -- --gh-token "$GITHUB_TOKEN" --repo "$REPO" --workflow-ref "$WORKFLOWREF" --branch "$BRANCHES" --ci-workspace-path "$CI_WORKSPACE_PATH"
+      run: npm run ci -- --gh-token "$GITHUB_TOKEN" --repo "$REPO" --workflow-ref "$WORKFLOWREF" --branch "$BRANCHES" --urls "$URLS" --url-mode "$URL_MODE" --ci-workspace-path "$CI_WORKSPACE_PATH"
       shell: bash
       working-directory: ${{ github.action_path }}

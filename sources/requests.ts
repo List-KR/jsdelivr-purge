@@ -1,4 +1,5 @@
 import * as actions from '@actions/core'
+import {chunk} from 'es-toolkit'
 import got from 'got'
 import {availableParallelism} from 'node:os'
 import {setTimeout as delay} from 'node:timers/promises'
@@ -33,14 +34,14 @@ async function getCdnResponse(id: string): Promise<cdnStatusResponse> {
 	return response
 }
 
-async function postPurgeRequest(options: programOptions, files: remainingFilename[]): Promise<cdnPostResponse> {
+async function postPurgePaths(paths: string[]): Promise<cdnPostResponse> {
 	const response = await got.post('https://purge.jsdelivr.net/', {
 		headers: {
 			'cache-control': 'no-cache',
 			'user-agent': 'jsdelivr-purge',
 		},
 		json: {
-			path: files.map(({branchOrTag, filename}) => `/gh/${options.repo}@${branchOrTag}/${filename}`),
+			path: paths,
 		} satisfies cdnPostRequest,
 		https: {
 			minVersion: 'TLSv1.3',
@@ -55,8 +56,25 @@ async function postPurgeRequest(options: programOptions, files: remainingFilenam
 	return response
 }
 
-async function purgeFiles(options: programOptions, files: remainingFilename[]): Promise<void> {
-	let response: cdnPostResponse | cdnStatusResponse = await postPurgeRequest(options, files)
+export function getPurgePath(value: string): string {
+	const url = new URL(value, 'https://cdn.jsdelivr.net')
+	if ((!value.startsWith('/') && !URL.canParse(value)) || url.origin !== 'https://cdn.jsdelivr.net' || url.pathname === '/') {
+		throw new Error(`Invalid jsDelivr URL or path: ${value}`)
+	}
+
+	return url.pathname
+}
+
+export function getUrlMode(value: string): 'additional' | 'overwrite' {
+	if (value !== 'additional' && value !== 'overwrite') {
+		throw new Error(`Invalid URL mode: ${value}`)
+	}
+
+	return value
+}
+
+async function purgePaths(paths: string[]): Promise<void> {
+	let response: cdnPostResponse | cdnStatusResponse = await postPurgePaths(paths)
 	while (response.status === 'pending') {
 		await delay(2500)
 		response = await getCdnResponse(response.id)
@@ -66,7 +84,7 @@ async function purgeFiles(options: programOptions, files: remainingFilename[]): 
 		throw new Error(`jsDelivr purge failed: ${response.id}`)
 	}
 
-	actions.info(`Queue: jsDelivr server reports that the following files are purged:\n${files.map(({branchOrTag, filename}) => `- @${branchOrTag}/${filename}`).join('\n')}`)
+	actions.info(`Queue: jsDelivr server reports that the following paths are purged:\n${paths.map(path => `- ${path}`).join('\n')}`)
 }
 
 export class PurgeRequestManager {
@@ -77,7 +95,13 @@ export class PurgeRequestManager {
 	constructor(private readonly options: programOptions) {}
 
 	private enqueue(files: remainingFilename[]): void {
-		this.tasks.push(this.queue.add(() => purgeFiles(this.options, files)))
+		this.tasks.push(this.queue.add(() => purgePaths(files.map(({branchOrTag, filename}) => `/gh/${this.options.repo}@${branchOrTag}/${filename}`))))
+	}
+
+	addFixedUrls(urls: string[]): void {
+		for (const paths of chunk([...new Set(urls.map(getPurgePath))], requestLimit)) {
+			this.tasks.push(this.queue.add(() => purgePaths(paths)))
+		}
 	}
 
 	addUrls(filenames: string[], branchOrTag: string): void {

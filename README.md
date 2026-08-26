@@ -23,12 +23,19 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run jsDelivr-Purge
-        uses: List-KR/jsdelivr-purge@7.0.0
+        uses: List-KR/jsdelivr-purge@7.0.1
+        with:
+          urls: |
+            https://cdn.jsdelivr.net/gh/owner/repo@latest/generated.txt
+            /gh/owner/repo@main/another-generated.txt
+          url-mode: additional
 ```
 
 The jsDelivr-Purge supports `workflow_dispatch`, `schedule` and `push` event.
 
 It always purges `latest` and the default branch of your repo.
+The optional `urls` input always purges the listed jsDelivr URLs or paths, separated by whitespace.
+`url-mode` defaults to `additional`; use `overwrite` to purge only `urls` without checking changed files.
 
 > [!WARNING]
 > jsDelivr will add authentication data into a request header.

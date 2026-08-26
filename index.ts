@@ -6,7 +6,7 @@ import {listBranches} from './sources/branches.js'
 import {getChangedFiles} from './sources/commits.js'
 import {exportArgs, isDebug} from './sources/debug.js'
 import {getIpAddress} from './sources/ipcheck.js'
-import {PurgeRequestManager} from './sources/requests.js'
+import {getUrlMode, PurgeRequestManager} from './sources/requests.js'
 import type {programOptions} from './sources/types.js'
 
 const cpuModel = cpus()[0]?.model ?? 'unknown CPU'
@@ -18,13 +18,20 @@ const {values} = parseArgs({options: {
 	repo: {type: 'string'},
 	'workflow-ref': {type: 'string'},
 	branch: {type: 'string', default: ''},
+	urls: {type: 'string', default: ''},
+	'url-mode': {type: 'string', default: 'additional'},
 	'ci-workspace-path': {type: 'string'},
 }})
 const ghToken = values['gh-token']
 const workflowRef = values['workflow-ref']
 const ciWorkspacePath = values['ci-workspace-path']
+const urls = values.urls.split(/\s+/).filter(Boolean)
+const urlMode = getUrlMode(values['url-mode'])
 if (!ghToken || !values.repo || !workflowRef || !ciWorkspacePath) {
 	throw new Error('Missing required --gh-token, --repo, --workflow-ref, or --ci-workspace-path option')
+}
+if (urlMode === 'overwrite' && urls.length === 0) {
+	throw new Error('The overwrite URL mode requires at least one URL')
 }
 
 const options: programOptions = {debug: values.debug, ghToken, repo: values.repo, workflowRef, branch: values.branch, ciWorkspacePath}
@@ -34,22 +41,27 @@ if (isDebug(options)) {
 
 actions.info(`The runner's IP address: ${await getIpAddress()}`)
 
-performance.mark('latest-workflow-time')
-const latestWorkflowTime = await getLatestWorkflowTime(options)
-actions.info(`Getting the latest workflow run took ${Math.floor(performance.measure('latest-workflow-time-duration', 'latest-workflow-time').duration)} ms.`)
-
-const branchSelection = await listBranches(options)
-const changesByBranch = await Promise.all(branchSelection.branches.map(async branch => ({
-	branch,
-	filenames: await getChangedFiles(options, latestWorkflowTime, branch),
-})))
-
-performance.mark('purge')
 const purgeRequest = new PurgeRequestManager(options)
-purgeRequest.addUrls(changesByBranch.find(({branch}) => branch === branchSelection.defaultBranch)?.filenames ?? [], 'latest')
-for (const {branch, filenames} of changesByBranch) {
-	purgeRequest.addUrls(filenames, branch)
+if (urlMode === 'additional') {
+	performance.mark('latest-workflow-time')
+	const latestWorkflowTime = await getLatestWorkflowTime(options)
+	actions.info(`Getting the latest workflow run took ${Math.floor(performance.measure('latest-workflow-time-duration', 'latest-workflow-time').duration)} ms.`)
+
+	const branchSelection = await listBranches(options)
+	const changesByBranch = await Promise.all(branchSelection.branches.map(async branch => ({
+		branch,
+		filenames: await getChangedFiles(options, latestWorkflowTime, branch),
+	})))
+
+	performance.mark('purge')
+	purgeRequest.addUrls(changesByBranch.find(({branch}) => branch === branchSelection.defaultBranch)?.filenames ?? [], 'latest')
+	for (const {branch, filenames} of changesByBranch) {
+		purgeRequest.addUrls(filenames, branch)
+	}
+} else {
+	performance.mark('purge')
 }
+purgeRequest.addFixedUrls(urls)
 
 purgeRequest.start()
 await purgeRequest.onEnded()
